@@ -1,0 +1,22 @@
+Hi Lin - It is nice to meet you and thank you for offering to help to streamline the collection of Canadian quotas.
+ 
+Here is the website for Canadian quota updates - Steel: Tariff rate quota (TRQ) utilization data quarterly reports
+https://www.international.gc.ca/trade-commerce/controls-controles/steel-acier/trq_data-donnees_tarifaires.aspx?lang=eng&utm_source=chatgpt.com
+ 
+I have also attached a spreadsheet of ideally what I am looking for.
+ 
+Here are the basics.
+I am looking for a weekly update to see how the quota utilization progresses during the quarter. Maybe grabbing the latest data consistently each Monday morning.
+There are many product categories in the tariff quota system; however I have only highlighted the ones (in the attached spreadsheet) that we track.
+The current quarter closes at the end of the month so we will need to watch when the utilization data will begin to be posted for Q4. 
+ 
+If we could match the utilization data with overall imports over the same time period, that would be great. I have included the HTS codes (used to classify imported products) in the attached spreadsheet under "HTS Code Covered".
+ 
+Import data is located at - B1
+https://www.eics-scei.gc.ca/report-rapport/b1.htm
+ 
+I have no idea how feasible this is to set up. And let me know if you would like to walk through this data together. And finally I am open to setting up a Github account. 
+ 
+Thanks!
+Laura
+
