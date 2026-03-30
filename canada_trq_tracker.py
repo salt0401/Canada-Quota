@@ -121,9 +121,10 @@ BOLD_FONT = Font(bold=True)
 # ---------------------------------------------------------------------------
 
 def parse_number(s: str) -> float:
-    """Strip commas and parse a numeric string. Returns 0.0 for empty/blank."""
+    """Strip commas and parse a numeric string. Returns 0.0 for empty/blank.
+    Handles 'Max Utilized' as 0.0 (actual KGM value unknown)."""
     s = s.strip().strip('"')
-    if not s:
+    if not s or s == "Max Utilized":
         return 0.0
     return float(s.replace(",", ""))
 
@@ -868,15 +869,14 @@ def main():
     fta_csv = download_csv("FTA", quarter)
     nfta_csv = download_csv("NFTA", quarter)
 
-    # Fallback to previous quarter if current not available
+    # Fallback to previous quarter if EITHER file is missing.
+    # Both FTA and NFTA must use the same quarter to avoid mixing data.
     if fta_csv is None or nfta_csv is None:
         prev_quarters = {"Q1": "Q4", "Q2": "Q1", "Q3": "Q2", "Q4": "Q3"}
         prev_q = prev_quarters[quarter]
-        log.info("%s data not yet available, trying %s...", quarter, prev_q)
-        if fta_csv is None:
-            fta_csv = download_csv("FTA", prev_q)
-        if nfta_csv is None:
-            nfta_csv = download_csv("NFTA", prev_q)
+        log.info("%s data not fully available, falling back to %s for both FTA and NFTA...", quarter, prev_q)
+        fta_csv = download_csv("FTA", prev_q)
+        nfta_csv = download_csv("NFTA", prev_q)
         if fta_csv is None or nfta_csv is None:
             log.error("Could not download TRQ CSV data. Exiting.")
             sys.exit(1)
