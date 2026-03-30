@@ -765,27 +765,31 @@ def create_b1_sheet(wb: Workbook, b1_data: dict | None, trq_quarter: str, today:
     # Row 1: Title
     ws.cell(row=1, column=1, value=f"B1 Import Data - Calendar Quarter: {cal_label}")
 
-    # Rows 3-5: Disclaimer
+    # Rows 3-7: Disclaimers
     ws.cell(row=3, column=1,
             value="NOTE: B1 data reflects actual customs entries using calendar quarters (Jan-Mar, Apr-Jun, etc.).")
     ws.cell(row=4, column=1,
             value="TRQ utilization data uses offset quarters (Mar 26-Jun 26, etc.) and tracks permit issuance, not customs entries.")
     ws.cell(row=5, column=1,
             value="The two datasets have ~5-6 day boundary misalignment and measure different aspects of the import process.")
+    ws.cell(row=6, column=1,
+            value="B1 imports are matched at the 8-digit tariff item level using the HTS codes listed in the 'HTS code covered' sheet.")
+    ws.cell(row=7, column=1,
+            value="These HTS codes are a selected subset; the official TRQ product scope may include additional tariff items not tracked here.")
 
-    # Row 7: Headers
+    # Row 9: Headers
     headers = ["Product Category", "Country", "Total Tonnes", "Total C$1000", "Avg C$/Tonne"]
     for col_idx, header in enumerate(headers, 1):
-        cell = ws.cell(row=7, column=col_idx, value=header)
+        cell = ws.cell(row=9, column=col_idx, value=header)
         cell.font = BOLD_FONT
 
     if b1_data is None:
-        ws.cell(row=9, column=1, value="B1 data not available for the matching calendar quarter.")
+        ws.cell(row=11, column=1, value="B1 data not available for the matching calendar quarter.")
         log.info("B1 sheet created (no data)")
         return
 
     # Write data
-    row_num = 8
+    row_num = 10
     for product in TRACKED_PRODUCTS:
         if product not in b1_data:
             continue
@@ -810,7 +814,7 @@ def create_b1_sheet(wb: Workbook, b1_data: dict | None, trq_quarter: str, today:
 
             row_num += 1
 
-    log.info("B1 sheet created with %d data rows", row_num - 8)
+    log.info("B1 sheet created with %d data rows", row_num - 10)
 
 
 def create_hts_sheet(wb: Workbook):

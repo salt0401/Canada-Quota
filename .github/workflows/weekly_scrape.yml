@@ -28,3 +28,16 @@ jobs:
           git add data/
           git diff --staged --quiet || git commit -m "Weekly TRQ update $(date +%Y-%m-%d)"
           git push
+
+      - name: Update GitHub Release with latest Excel
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest TRQ Data
+          body: |
+            Updated on ${{ github.event.repository.updated_at }}.
+            Download the Excel file below.
+          files: data/canada_trq_tracker.xlsx
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

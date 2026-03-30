@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Canada TRQ Tracker - Setup Guide</title>
+<title>Canada TRQ Tracker - Guide</title>
 <style>
-  :root { --blue: #0969da; --green: #1a7f37; --gray: #656d76; --bg: #ffffff; --card: #f6f8fa; --border: #d0d7de; }
+  :root { --blue: #0969da; --green: #1a7f37; --gray: #656d76; --card: #f6f8fa; --border: #d0d7de; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; line-height: 1.6; color: #1f2328; max-width: 900px; margin: 0 auto; padding: 40px 20px; }
   h1 { font-size: 2em; margin-bottom: 8px; }
@@ -21,10 +21,6 @@
   .flow-box.highlight { background: #dafbe1; border-color: var(--green); }
   .flow-arrow { font-size: 1.5em; color: var(--gray); }
   code { background: #eff1f3; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
-  pre { background: #1b1f23; color: #e6edf3; padding: 16px; border-radius: 8px; overflow-x: auto; margin: 12px 0; font-size: 0.85em; }
-  .step { display: flex; gap: 16px; margin: 16px 0; }
-  .step-num { background: var(--blue); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
-  .step-content { flex: 1; }
   table { width: 100%; border-collapse: collapse; margin: 12px 0; }
   th, td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
   th { background: var(--card); font-weight: 600; }
@@ -39,14 +35,12 @@
   .toc li { padding: 4px 0; }
   .toc a { text-decoration: none; }
   .toc a:hover { text-decoration: underline; }
-  .warning { background: #ffebe9; border: 1px solid #d1242f; border-radius: 8px; padding: 12px 16px; margin: 16px 0; }
-  .warning::before { content: "Important: "; font-weight: bold; color: #d1242f; }
 </style>
 </head>
 <body>
 
 <h1>Canada TRQ Weekly Tracker</h1>
-<p class="subtitle">Automated Canadian steel quota monitoring &mdash; Setup &amp; Usage Guide</p>
+<p class="subtitle">Automated Canadian steel quota monitoring &mdash; Usage Guide</p>
 
 <div class="toc">
   <strong>Contents</strong>
@@ -54,10 +48,8 @@
     <li><a href="#what">1. What Does This Tool Do?</a></li>
     <li><a href="#how">2. How Does It Work?</a></li>
     <li><a href="#excel">3. What Does the Excel Output Look Like?</a></li>
-    <li><a href="#prereq">4. Prerequisites</a></li>
-    <li><a href="#setup">5. Setup Instructions (One-Time)</a></li>
-    <li><a href="#update">6. How to Get the Latest Data</a></li>
-    <li><a href="#faq">7. FAQ</a></li>
+    <li><a href="#download">4. How to Get the Latest Data</a></li>
+    <li><a href="#faq">5. FAQ</a></li>
   </ul>
 </div>
 
@@ -85,7 +77,7 @@
 <!-- ============================================ -->
 <h2 id="how">2. How Does It Work?</h2>
 
-<p>The tool runs automatically on GitHub&rsquo;s cloud servers. You don&rsquo;t need to keep your computer on.</p>
+<p>Everything runs automatically in the cloud. No setup is needed on your end.</p>
 
 <div class="flow">
   <div class="flow-box highlight">
@@ -105,21 +97,7 @@
   </div>
   <div class="flow-arrow">&rarr;</div>
   <div class="flow-box highlight">
-    <strong>Saved to repo</strong><br>ready for you
-  </div>
-</div>
-
-<div class="flow">
-  <div class="flow-box">
-    <strong>You</strong><br>double-click <code>update.bat</code>
-  </div>
-  <div class="flow-arrow">&rarr;</div>
-  <div class="flow-box">
-    <strong>Downloads</strong><br>latest Excel from GitHub
-  </div>
-  <div class="flow-arrow">&rarr;</div>
-  <div class="flow-box highlight">
-    <strong>Excel opens</strong><br>automatically
+    <strong>Ready</strong><br>for you to download
   </div>
 </div>
 
@@ -127,9 +105,9 @@
   <h3>Key Points</h3>
   <ul>
     <li><span class="badge badge-auto">Automatic</span> Runs every Monday at 8:00 AM Eastern &mdash; no action needed from you</li>
-    <li><span class="badge badge-auto">Free</span> GitHub Free accounts include 2,000 minutes/month of automation. This script uses about 2 minutes per week (~8 min/month)</li>
-    <li><span class="badge badge-auto">Cloud-based</span> Runs on GitHub&rsquo;s servers, not your computer. Works even if your PC is off</li>
-    <li><span class="badge badge-auto">Smart</span> Automatically detects quarterly transitions and creates new sheets when a new quarter begins</li>
+    <li><span class="badge badge-auto">Cloud-based</span> Runs on GitHub&rsquo;s servers, not anyone&rsquo;s computer</li>
+    <li><span class="badge badge-auto">Smart</span> Automatically detects quarterly transitions and creates new sheets</li>
+    <li><span class="badge badge-auto">No install</span> You just download the Excel file &mdash; nothing to install</li>
   </ul>
 </div>
 
@@ -143,6 +121,7 @@
     <tr><td><strong>Update speed</strong></td><td>Near real-time</td><td>Several days lag</td></tr>
   </table>
   <p>There is a ~5-6 day boundary mismatch between the two quarter systems. This is noted in the B1 sheet.</p>
+  <p>B1 import volumes are matched using a <strong>selected subset</strong> of HTS codes for each product category. The official TRQ product scope may include additional tariff items not tracked here. See the &ldquo;HTS code covered&rdquo; sheet for the full list of codes used.</p>
 </div>
 
 <!-- ============================================ -->
@@ -160,143 +139,56 @@
   <tr><td>Last</td><td>OVER &mdash; shows &ldquo;YES&rdquo; if a country hit its cap</td><td>YES</td></tr>
 </table>
 
-<p>Each Monday, a new date column is added. The <strong>TOTAL</strong> row uses a SUM formula so you can verify the numbers. Yellow highlighted cells indicate totals and the OVER column.</p>
+<p>Each Monday, a new date column is added. The <strong>TOTAL</strong> row uses a SUM formula. Yellow highlighted cells indicate totals and the OVER column.</p>
 
 <h3>B1 Imports Sheet</h3>
-<p>Shows actual import tonnes and value (C$) for each product/country combination during the matching calendar quarter. HTS codes are matched at the 8-digit tariff item level, capturing all statistical suffixes.</p>
+<p>Shows actual import tonnes and value (C$) for each product/country combination during the matching calendar quarter.</p>
 
 <h3>HTS Code Covered Sheet</h3>
 <p>Static reference listing the HTS codes that map to each tracked product category.</p>
 
 <!-- ============================================ -->
-<h2 id="prereq">4. Prerequisites</h2>
-
-<p>You need two things installed on your computer (both free):</p>
+<h2 id="download">4. How to Get the Latest Data</h2>
 
 <div class="card">
-  <h3>1. Git for Windows</h3>
-  <p>Download from <a href="https://git-scm.com/download/win" target="_blank">git-scm.com/download/win</a></p>
-  <p>During installation, accept all default settings. This is a one-time install.</p>
-</div>
-
-<div class="card">
-  <h3>2. A GitHub Account</h3>
-  <p>Sign up at <a href="https://github.com/join" target="_blank">github.com/join</a> (free). Use your work email if you prefer.</p>
-</div>
-
-<!-- ============================================ -->
-<h2 id="setup">5. Setup Instructions (One-Time)</h2>
-
-<p>Lin will provide you with a <strong>.zip file</strong> containing all project files. Follow these steps:</p>
-
-<div class="step">
-  <div class="step-num">1</div>
-  <div class="step-content">
-    <strong>Unzip the Project</strong>
-    <p>Extract the .zip file to any location (e.g., your Desktop). You should see a folder called <code>Canada-Quota</code> with files inside.</p>
-  </div>
-</div>
-
-<div class="step">
-  <div class="step-num">2</div>
-  <div class="step-content">
-    <strong>Create a New GitHub Repository</strong>
-    <p>Go to <a href="https://github.com/new" target="_blank">github.com/new</a>:</p>
-    <ul>
-      <li>Repository name: <code>Canada-Quota</code></li>
-      <li>Set to <strong>Public</strong></li>
-      <li>Do <strong>NOT</strong> check &ldquo;Add a README file&rdquo;</li>
-      <li>Click <strong>Create repository</strong></li>
-    </ul>
-    <p>After creating, GitHub will show a page with setup commands. Keep this page open &mdash; you&rsquo;ll need the URL (it looks like <code>https://github.com/YOUR-USERNAME/Canada-Quota.git</code>).</p>
-  </div>
-</div>
-
-<div class="step">
-  <div class="step-num">3</div>
-  <div class="step-content">
-    <strong>Edit <code>setup.bat</code></strong>
-    <p>Open <code>setup.bat</code> in the unzipped folder with a text editor (right-click &rarr; Edit or Open with Notepad). Find this line:</p>
-    <pre>set REPO_URL=https://github.com/YOUR-USERNAME/Canada-Quota.git</pre>
-    <p>Change <code>YOUR-USERNAME</code> to your actual GitHub username. Save the file.</p>
-  </div>
-</div>
-
-<div class="step">
-  <div class="step-num">4</div>
-  <div class="step-content">
-    <strong>Upload Files to GitHub</strong>
-    <p>Go to your new repo page on GitHub. Click <strong>&ldquo;uploading an existing file&rdquo;</strong> link. Drag and drop <strong>all files and folders</strong> from the unzipped folder into the upload area. Click <strong>Commit changes</strong>.</p>
-    <div class="note">Make sure to include the hidden <code>.github</code> folder and <code>.gitignore</code> file. On Windows, you may need to enable &ldquo;Show hidden files&rdquo; in File Explorer (View &rarr; Show &rarr; Hidden items).</div>
-  </div>
-</div>
-
-<div class="step">
-  <div class="step-num">5</div>
-  <div class="step-content">
-    <strong>Enable GitHub Actions</strong>
-    <p>In your repo, click the <strong>Actions</strong> tab. GitHub may ask you to enable workflows &mdash; click <strong>&ldquo;I understand my workflows, go ahead and enable them&rdquo;</strong>.</p>
-  </div>
-</div>
-
-<div class="step">
-  <div class="step-num">6</div>
-  <div class="step-content">
-    <strong>Run It Manually (First Time)</strong>
-    <p>In the <strong>Actions</strong> tab, click <strong>&ldquo;Weekly Canada TRQ Update&rdquo;</strong> on the left, then click <strong>&ldquo;Run workflow&rdquo;</strong> &rarr; <strong>&ldquo;Run workflow&rdquo;</strong> (green button). Wait 1-2 minutes for it to complete (green check mark).</p>
-  </div>
-</div>
-
-<div class="step">
-  <div class="step-num">7</div>
-  <div class="step-content">
-    <strong>Clone the Repo to Your Computer</strong>
-    <p>Double-click <code>setup.bat</code> (the one you edited in step 3). This will download the repo to your Desktop as a folder called <code>Canada-Quota</code>.</p>
-    <p>If prompted to log in, enter your GitHub username and a <strong>Personal Access Token</strong> (not your password). To create a token: <a href="https://github.com/settings/tokens/new" target="_blank">github.com/settings/tokens/new</a> &rarr; check &ldquo;repo&rdquo; &rarr; Generate token &rarr; copy and paste it as the password.</p>
-  </div>
-</div>
-
-<div class="step">
-  <div class="step-num">8</div>
-  <div class="step-content">
-    <strong>Done!</strong>
-    <p>From now on, the script runs automatically every Monday. To get the latest Excel file, just double-click <code>update.bat</code> inside the <code>Canada-Quota</code> folder on your Desktop.</p>
-  </div>
-</div>
-
-<!-- ============================================ -->
-<h2 id="update">6. How to Get the Latest Data</h2>
-
-<div class="card">
-  <h3>Double-click <code>update.bat</code> <span class="badge badge-manual">Every time you want new data</span></h3>
+  <h3>Option A: Double-click <code>download_latest.bat</code> <span class="badge badge-manual">Easiest</span></h3>
+  <p>Lin has provided a small file called <code>download_latest.bat</code>. Save it to your Desktop.</p>
   <ol>
-    <li>Open the <code>Canada-Quota</code> folder on your Desktop</li>
-    <li>Double-click <code>update.bat</code></li>
-    <li>It pulls the latest data from GitHub and opens the Excel file automatically</li>
+    <li>Double-click <code>download_latest.bat</code></li>
+    <li>The latest Excel file downloads to your Desktop and opens automatically</li>
   </ol>
-  <p>The Excel file is located at: <code>Canada-Quota\data\canada_trq_tracker.xlsx</code></p>
+  <p>That&rsquo;s it. No accounts, no passwords, no installation needed.</p>
+  <p><em>Requires: Windows 10 or later (uses built-in curl.exe)</em></p>
+</div>
+
+<div class="card">
+  <h3>Option B: Download from GitHub website</h3>
+  <ol>
+    <li>Go to <a href="https://github.com/salt0401/Canada-Quota/releases/latest" target="_blank">github.com/salt0401/Canada-Quota/releases/latest</a></li>
+    <li>Click <strong>canada_trq_tracker.xlsx</strong> to download</li>
+  </ol>
 </div>
 
 <!-- ============================================ -->
-<h2 id="faq">7. FAQ</h2>
+<h2 id="faq">5. FAQ</h2>
 
 <div class="card">
   <h3>What if the script stops working?</h3>
-  <p>GitHub sends you an email when a workflow fails. Common causes:</p>
+  <p>Contact Lin. Common causes:</p>
   <ul>
-    <li>The Canadian government changed their website &mdash; the script may need updating</li>
-    <li>The CSV format changed &mdash; contact Lin for an update</li>
+    <li>The Canadian government changed their website format</li>
+    <li>The CSV data structure changed</li>
   </ul>
 </div>
 
 <div class="card">
   <h3>What happens when a new quarter starts?</h3>
-  <p>The script automatically detects the new quarter and creates new sheets (e.g., <code>non-FTA Q1</code>, <code>FTA Q1</code>). The previous quarter&rsquo;s sheets remain in the workbook as historical records.</p>
+  <p>The script automatically detects the new quarter and creates new sheets (e.g., <code>non-FTA Q1</code>, <code>FTA Q1</code>). Previous quarter sheets remain as historical records.</p>
 </div>
 
 <div class="card">
-  <h3>Can I run it more than once a week?</h3>
-  <p>Yes! Go to <strong>Actions</strong> &rarr; <strong>Weekly Canada TRQ Update</strong> &rarr; <strong>Run workflow</strong> at any time. Then double-click <code>update.bat</code> to get the new data.</p>
+  <h3>Can I get data more than once a week?</h3>
+  <p>The script runs every Monday automatically. If you need an ad-hoc update, contact Lin to trigger a manual run.</p>
 </div>
 
 <div class="card">
@@ -305,13 +197,8 @@
 </div>
 
 <div class="card">
-  <h3>Is this free?</h3>
-  <p>Yes. GitHub Free accounts include 2,000 minutes/month of Actions time. This script uses ~8 minutes/month. That&rsquo;s less than 1% of the free quota.</p>
-</div>
-
-<div class="card">
-  <h3>What does <code>update.bat</code> actually do?</h3>
-  <p>It runs a single command: <code>git pull</code>, which downloads any new files from GitHub to your local folder. Then it opens the Excel file. It does not upload or change anything.</p>
+  <h3>Why might B1 import volumes not exactly match TRQ utilization?</h3>
+  <p>Three reasons: (1) TRQ tracks <em>permits issued</em> while B1 tracks <em>actual customs entries</em> &mdash; these are different measurements. (2) The quarter boundaries differ by ~5-6 days. (3) The HTS codes used for B1 matching are a selected subset of the full TRQ product scope.</p>
 </div>
 
 <hr style="margin: 40px 0;">
