@@ -1,0 +1,33 @@
+Subject: Canada TRQ Tracker - Ready to Use
+
+Hi Laura,
+
+The Canada TRQ tracker is set up and running. It automatically updates every Monday morning at 8:00 AM ET with the latest quota utilization data.
+
+I've attached two files:
+
+1. download_latest.bat
+   - Save this to your Desktop
+   - Double-click it anytime to download the latest Excel file
+   - It will open automatically in Excel
+   - No accounts, passwords, or software installation needed
+   - Requires Windows 10 or later (uses built-in curl.exe)
+
+2. guide.html
+   - Open this in your browser for a detailed explanation of the tool
+   - Covers what the Excel output looks like, how the automation works, and FAQ
+
+A few things to note:
+
+- TRQ vs B1 data: The TRQ sheets track permit quantities issued (administrative), while the B1 sheet tracks actual customs entries (physical imports). These are different measurements and use slightly different quarter boundaries (~5-6 day offset). This is explained in the B1 sheet.
+
+- B1 availability: B1 data for Q4's matching calendar quarter (Apr-Jun) won't appear until April. Until then, the B1 sheet will show "not available."
+
+- HTS code coverage: The B1 import data uses a selected subset of HTS codes for each product category (listed in the "HTS code covered" sheet). The official TRQ product scope may include additional tariff items beyond what we're tracking. Let me know if you'd like to adjust the code coverage.
+
+- Quarterly transitions: When a new quarter starts, the script automatically creates new sheets (e.g., "non-FTA Q1", "FTA Q1"). Previous quarter sheets remain in the workbook as historical records.
+
+Let me know if you have any questions or would like to walk through the data together.
+
+Best,
+Lin
