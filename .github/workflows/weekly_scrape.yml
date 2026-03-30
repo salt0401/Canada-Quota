@@ -1,0 +1,41 @@
+name: Weekly Canada TRQ Update
+on:
+  schedule:
+    - cron: '0 12 * * 1'    # Every Monday at 12:00 UTC (~8:00 AM ET)
+  workflow_dispatch:          # Manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install -r requirements.txt
+
+      - run: python canada_trq_tracker.py
+
+      - name: Commit updated data
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add data/
+          git diff --staged --quiet || git commit -m "Weekly TRQ update $(date +%Y-%m-%d)"
+          git push
+
+      - name: Update GitHub Release with latest Excel
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest TRQ Data
+          body: "Updated on $(date +%Y-%m-%d). Download the Excel file below."
+          files: data/canada_trq_tracker.xlsx
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

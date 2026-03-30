@@ -4,6 +4,7 @@ Here is the website for Canadian quota updates - Steel: Tariff rate quota (TRQ) 
 https://www.international.gc.ca/trade-commerce/controls-controles/steel-acier/trq_data-donnees_tarifaires.aspx?lang=eng&utm_source=chatgpt.com
  
 I have also attached a spreadsheet of ideally what I am looking for.
+"C:\Users\owen3\OneDrive\Desktop\Project\MEPS\Canada-Quota\Canadian Quota Template.xlsx"
  
 Here are the basics.
 I am looking for a weekly update to see how the quota utilization progresses during the quarter. Maybe grabbing the latest data consistently each Monday morning.
