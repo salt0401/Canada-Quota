@@ -251,6 +251,10 @@ def parse_trq_csv(csv_text: str) -> dict:
             continue
         fields = list(csv.reader(io.StringIO(lines[i])))[0]
         o = part_a_offset
+        if len(fields) < o + 7:
+            log.warning("Part A line %d has only %d fields (expected %d+), skipping: %s",
+                        i + 1, len(fields), o + 7, lines[i][:80])
+            continue
         item_number = int(fields[o])
         product_name = fields[o + 1].strip()
         max_quota = int(parse_number(fields[o + 2]))
@@ -335,8 +339,8 @@ def parse_trq_csv(csv_text: str) -> dict:
                 for row in section:
                     countries[row["country"]] = row["share_pct"]
 
-                # Validation: compare total_kgm
-                if section:
+                # Validation: compare total_kgm (skip if "Max Utilized" made Part A KGM = 0)
+                if section and a_item["total_util_kgm"] > 0:
                     b_total_kgm = section[0]["total_kgm"]
                     if abs(b_total_kgm - a_item["total_util_kgm"]) > 1:
                         log.warning(
@@ -345,6 +349,8 @@ def parse_trq_csv(csv_text: str) -> dict:
                         )
             else:
                 log.warning("No Part B section found for %s (expected non-zero utilization)", product_name)
+                # Still advance b_idx to stay synchronized with Part A ordering
+                # (the section may have been missing or malformed)
         else:
             # Zero utilization — still has a header in Part B but no data rows.
             # The header+blank was counted as an empty section.
@@ -458,7 +464,7 @@ def scrape_b1_imports() -> dict[str, dict[str, dict[str, float]]] | None:
             current_month = cells[3]
             process(current_hs, current_month, cells[4], cells[5], cells[6])
 
-        elif n == 6 and cells[1].isdigit() and len(cells[1]) <= 2:
+        elif n == 6 and cells[1].isdigit() and len(cells[1]) <= 2 and 1 <= int(cells[1]) <= 12:
             current_month = cells[1]
             process(current_hs or "", current_month, cells[2], cells[3], cells[4])
 
@@ -638,6 +644,11 @@ def update_trq_sheet(ws, data: dict, today: date):
     header_cell = ws.cell(row=2, column=new_date_col, value=date_header)
     header_cell.font = BOLD_FONT
 
+    # Clear the entire new date column first (old OVER "YES" values may linger)
+    for row in range(3, ws.max_row + 1):
+        ws.cell(row=row, column=new_date_col).value = None
+        ws.cell(row=row, column=new_date_col).fill = PatternFill()
+
     # Get product row ranges
     ranges = _get_product_row_ranges(ws)
 
@@ -676,6 +687,7 @@ def update_trq_sheet(ws, data: dict, today: date):
             # If country not in current data, leave blank
 
     # Check for new countries not yet in the sheet
+    rows_inserted = 0
     for prod in TRACKED_PRODUCTS:
         prod_data = data.get(prod, {})
         countries = prod_data.get("countries", {})
@@ -693,14 +705,26 @@ def update_trq_sheet(ws, data: dict, today: date):
         for country in sorted(countries.keys()):
             if country not in existing_countries:
                 log.info("New country '%s' for product '%s' — appending row", country, prod)
-                # Insert before TOTAL row
                 total_row = r["total_row"]
                 if total_row:
                     ws.insert_rows(total_row)
                     new_row = total_row
-                    # Shift ranges
+                    rows_inserted += 1
+
+                    # Update current product's ranges
                     r["total_row"] = total_row + 1
                     r["last_country_row"] = new_row
+
+                    # Shift ALL subsequent products' row references down by 1
+                    for other_prod, other_r in ranges.items():
+                        if other_prod == prod:
+                            continue
+                        if other_r["first_row"] > total_row:
+                            other_r["first_row"] += 1
+                        if other_r["last_country_row"] and other_r["last_country_row"] >= total_row:
+                            other_r["last_country_row"] += 1
+                        if other_r["total_row"] and other_r["total_row"] > total_row:
+                            other_r["total_row"] += 1
 
                     ws.cell(row=new_row, column=1, value=prod)
                     ws.cell(row=new_row, column=2, value=country)

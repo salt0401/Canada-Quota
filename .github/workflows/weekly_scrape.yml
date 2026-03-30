@@ -1,7 +1,7 @@
 name: Weekly Canada TRQ Update
 on:
   schedule:
-    - cron: '0 12 * * 1'    # Every Monday at 12:00 UTC (~8:00 AM ET)
+    - cron: '0 12 * * 1'    # Every Monday at 12:00 UTC (~7-8 AM ET depending on DST)
   workflow_dispatch:          # Manual trigger
 
 permissions:
@@ -34,9 +34,7 @@ jobs:
         with:
           tag_name: latest
           name: Latest TRQ Data
-          body: |
-            Updated on ${{ github.event.repository.updated_at }}.
-            Download the Excel file below.
+          body: "Weekly TRQ data update. Download the Excel file below."
           files: data/canada_trq_tracker.xlsx
           make_latest: true
         env:
