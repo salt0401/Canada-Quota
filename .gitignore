@@ -1,3 +1,6 @@
 __pycache__/
 *.pyc
 *.pyo
+
+# Distribution bundle — derived from download_latest.bat + guide.html, regenerated as needed
+download_latest.zip
