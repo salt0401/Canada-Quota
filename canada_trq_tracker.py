@@ -398,8 +398,12 @@ def parse_trq_csv(csv_text: str) -> dict:
 # B1 Import Data Scraping
 # ---------------------------------------------------------------------------
 
-def scrape_b1_imports() -> dict[str, dict[str, dict[str, float]]] | None:
+def scrape_b1_imports(month_range: tuple[int, int]) -> dict[str, dict[str, dict[str, float]]] | None:
     """Scrape B1 HTML page and return import data for tracked products.
+
+    The B1 page can span several calendar months (currently year-to-date), so
+    rows are filtered to ``month_range`` (inclusive) to keep imports aligned with
+    the active TRQ quarter — Laura's "imports over the same time period".
 
     Returns:
         {
@@ -410,6 +414,7 @@ def scrape_b1_imports() -> dict[str, dict[str, dict[str, float]]] | None:
             ...
         }
     """
+    allowed_months = set(range(month_range[0], month_range[1] + 1))
     try:
         log.info("Downloading B1 page (%s)...", B1_URL)
         resp = requests.get(B1_URL, timeout=60)
@@ -445,6 +450,11 @@ def scrape_b1_imports() -> dict[str, dict[str, dict[str, float]]] | None:
         product = _HTS_REVERSE.get(hs_code[:8])
         if product is None:
             return  # Not a tracked HS code
+        try:
+            if int(month) not in allowed_months:
+                return  # Outside the quarter-aligned month window
+        except (ValueError, TypeError):
+            return  # Unparseable month — skip rather than miscount
         country = COUNTRY_NAME_MAP.get(country, country)
         tonnes = parse_number(tonnes_str)
         value = parse_number(value_str)
@@ -801,6 +811,8 @@ def create_b1_sheet(wb: Workbook, b1_data: dict | None, trq_quarter: str, today:
             value="B1 imports are matched at the 8-digit tariff item level using the HTS codes listed in the 'HTS code covered' sheet.")
     ws.cell(row=7, column=1,
             value="These HTS codes are a selected subset; the official TRQ product scope may include additional tariff items not tracked here.")
+    ws.cell(row=8, column=1,
+            value=f"Imports are limited to calendar months {month_names[cal_start_m]}-{month_names[cal_end_m]} to align with the TRQ quarter; the quarter may be partially complete (data current through the latest available customs month).")
 
     # Row 9: Headers
     headers = ["Product Category", "Country", "Total Tonnes", "Total C$1000", "Avg C$/Tonne"]
@@ -916,7 +928,7 @@ def main():
     # B1 import data
     b1_data = None
     if should_fetch_b1(quarter, today):
-        b1_data = scrape_b1_imports()
+        b1_data = scrape_b1_imports(TRQ_TO_B1_CALENDAR_MONTHS[quarter])
         if b1_data is None:
             log.warning("B1 scraping returned no data for tracked products")
     else:
