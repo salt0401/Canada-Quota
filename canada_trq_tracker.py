@@ -40,6 +40,13 @@ log = logging.getLogger(__name__)
 
 BASE_URL = "https://www.eics-scei.gc.ca/report-rapport"
 B1_URL = f"{BASE_URL}/b1.htm"
+# Official landing page that lists the current report for each quarter with its
+# real filename and date range. Discovery reads from here so the scraper follows
+# the source's year-over-year file renames (e.g. Q1 -> Y2Q1) instead of guessing.
+LANDING_URL = (
+    "https://www.international.gc.ca/trade-commerce/controls-controles/"
+    "steel-acier/trq_data-donnees_tarifaires.aspx?lang=eng"
+)
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "canada_trq_tracker.xlsx")
 
@@ -200,21 +207,18 @@ def format_date_header(d: date) -> str:
     return d.strftime("%B %-d %Y")
 
 
-def get_current_quarter(today: date) -> str:
-    """Determine the TRQ quarter for a given date."""
-    month, day = today.month, today.day
-    if (month == 3 and day >= 26) or month in (4, 5) or (month == 6 and day <= 26):
-        return "Q4"
-    if (month == 6 and day >= 27) or month in (7, 8) or (month == 9 and day <= 25):
-        return "Q1"
-    if (month == 9 and day >= 26) or month in (10, 11) or (month == 12 and day <= 25):
-        return "Q2"
-    # Dec 26+ or Jan/Feb/Mar 1-25
-    return "Q3"
+# NOTE: the calendar-based get_current_quarter() was removed. The TRQ "program
+# year" rolls over and the source renames quarter files (Q1 -> Y2Q1) and shifts
+# boundary dates each year, so deriving the quarter from the calendar silently
+# tracked the wrong/closed quarter after a rollover. The current quarter, its
+# real CSV URL, and its date label are now discovered from the landing page; see
+# discover_current_reports().
 
 
 def get_quarter_date_range(quarter: str, ref_date: date) -> tuple[str, str]:
-    """Return human-readable start/end dates for the given quarter relative to ref_date."""
+    """Stale fallback for human-readable quarter dates (real boundaries drift
+    year to year). Discovery supplies the authoritative date strings; this is
+    only a default for create_trq_sheet when none are passed."""
     year = ref_date.year
     if quarter == "Q1":
         return f"June 27, {year}", f"September 25, {year}"
@@ -239,9 +243,8 @@ def should_fetch_b1(trq_quarter: str, today: date) -> bool:
 # TRQ CSV Download & Parsing
 # ---------------------------------------------------------------------------
 
-def download_csv(trq_type: str, quarter: str) -> str | None:
-    """Download TRQ CSV. trq_type is 'FTA' or 'NFTA'. Returns text or None."""
-    url = f"{BASE_URL}/TRQ_{trq_type}-{quarter}.csv"
+def download_csv(url: str) -> str | None:
+    """Download a TRQ CSV by full URL. Returns text, or None on HTTP 404."""
     try:
         log.info("Downloading %s ...", url)
         resp = SESSION.get(url, timeout=CSV_TIMEOUT)
@@ -254,6 +257,128 @@ def download_csv(trq_type: str, quarter: str) -> str | None:
     except requests.RequestException as exc:
         log.warning("Download failed for %s: %s", url, exc)
         return None
+
+
+_MONTHS = {name: num for num, name in enumerate(
+    ["January", "February", "March", "April", "May", "June", "July",
+     "August", "September", "October", "November", "December"], start=1)}
+
+
+def _parse_quarter_label(text: str):
+    """Parse a landing-page label such as
+        'Quarter 1: June 28 – September 29, 2026'
+        'Quarter 3: December 26, 2025 – March 25, 2026'
+    into (quarter_label, start_date, end_date, start_str, end_str), or None.
+    Handles the en-dash separator, a missing start-year (inferred from the end),
+    and year-wrap quarters. Only 'Quarter N' rows match, so sub-period
+    'Period N' rows are ignored."""
+    m = re.search(r"Quarter\s+(\d)\s*:\s*(.+)", text)
+    if not m:
+        return None
+    qnum = m.group(1)
+    parts = re.split(r"\s*[–—-]\s*", m.group(2).strip(), maxsplit=1)
+    if len(parts) != 2:
+        return None
+    end_m = re.match(r"([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})", parts[1].strip())
+    start_m = re.match(r"([A-Za-z]+)\s+(\d{1,2})(?:,\s*(\d{4}))?", parts[0].strip())
+    if not end_m or not start_m:
+        return None
+    e_mon, e_day, e_year = end_m.group(1), int(end_m.group(2)), int(end_m.group(3))
+    s_mon, s_day = start_m.group(1), int(start_m.group(2))
+    if s_mon not in _MONTHS or e_mon not in _MONTHS:
+        return None
+    s_year = int(start_m.group(3)) if start_m.group(3) else (
+        e_year - 1 if _MONTHS[s_mon] > _MONTHS[e_mon] else e_year)
+    try:
+        start_date = date(s_year, _MONTHS[s_mon], s_day)
+        end_date = date(e_year, _MONTHS[e_mon], e_day)
+    except ValueError:
+        return None
+    return (f"Q{qnum}", start_date, end_date,
+            f"{s_mon} {s_day}, {s_year}", f"{e_mon} {e_day}, {e_year}")
+
+
+def discover_current_reports(today: date | None = None) -> dict:
+    """Discover the CURRENT-quarter TRQ CSV for both partner groups from the
+    official landing page. Filenames/labels/dates are READ from the page, never
+    constructed -- the source renames files across program years (e.g. Q1 ->
+    Y2Q1) and uses inconsistent casing.
+
+    Returns {"FTA": {...}, "NFTA": {...}} where each value has keys csv_url,
+    quarter, start_date, end_date, start_str, end_str.
+
+    Raises RuntimeError on ANY problem (page unreachable, structure changed, no
+    current report, malformed CSV link, or FTA/NFTA disagreeing on the quarter)
+    so the caller can FAIL LOUD rather than silently publish a stale quarter."""
+    if today is None:
+        today = date.today()
+    try:
+        resp = SESSION.get(LANDING_URL, timeout=B1_TIMEOUT)
+        resp.raise_for_status()
+        resp.encoding = "utf-8"
+    except requests.RequestException as exc:
+        raise RuntimeError(f"could not fetch landing page {LANDING_URL}: {exc}") from exc
+
+    soup = BeautifulSoup(resp.text, "lxml")
+
+    # Group anchors by report stem (e.g. TRQ_FTA-Y2Q1). Each quarter row has a
+    # "Quarter N: <dates>" link (-> .htm) plus an adjacent "[.CSV]" link; pair
+    # them by shared stem. The CSV link is identified by its "[.CSV]" text, NOT
+    # by extension, because the page has at least one malformed [.CSV] -> .htm.
+    rows: dict[str, dict] = {}
+    for a in soup.find_all("a", href=True):
+        href = a["href"].strip()
+        base = href.rsplit("/", 1)[-1]
+        if not base.upper().startswith("TRQ_"):
+            continue
+        stem = re.sub(r"\.(html?|csv|xlsx)$", "", base, flags=re.I).upper()
+        row = rows.setdefault(stem, {"label": None, "csv_url": None})
+        text = a.get_text(" ", strip=True)
+        if re.search(r"Quarter\s+\d", text):
+            row["label"] = text
+        elif text.replace(" ", "").upper() == "[.CSV]":
+            row["csv_url"] = href
+
+    candidates: dict[str, list] = {"FTA": [], "NFTA": []}
+    for stem, row in rows.items():
+        if not row["label"] or not row["csv_url"]:
+            continue
+        parsed = _parse_quarter_label(row["label"])
+        if not parsed:
+            continue
+        quarter, start_date, end_date, start_str, end_str = parsed
+        partner = "NFTA" if "NFTA" in stem else ("FTA" if "FTA" in stem else None)
+        if partner is None:
+            continue
+        candidates[partner].append({
+            "csv_url": row["csv_url"], "quarter": quarter,
+            "start_date": start_date, "end_date": end_date,
+            "start_str": start_str, "end_str": end_str,
+        })
+
+    result = {}
+    for partner in ("FTA", "NFTA"):
+        cands = candidates[partner]
+        if not cands:
+            raise RuntimeError(f"no {partner} 'Quarter N' reports found on landing page")
+        # Current = the report whose date range contains today; if today falls in
+        # a gap between quarters, take the most recently started quarter.
+        in_range = [c for c in cands if c["start_date"] <= today <= c["end_date"]]
+        pool = in_range or [c for c in cands if c["start_date"] <= today]
+        if not pool:
+            raise RuntimeError(f"no current {partner} TRQ quarter found for {today}")
+        chosen = max(pool, key=lambda c: c["start_date"])
+        if not chosen["csv_url"].lower().endswith(".csv"):
+            raise RuntimeError(
+                f"{partner} current report CSV link is not a .csv (malformed page "
+                f"link): {chosen['csv_url']}")
+        result[partner] = chosen
+
+    if result["FTA"]["quarter"] != result["NFTA"]["quarter"]:
+        raise RuntimeError(
+            f"FTA/NFTA resolved to different quarters "
+            f"({result['FTA']['quarter']} vs {result['NFTA']['quarter']}); aborting")
+    return result
 
 
 def parse_trq_csv(csv_text: str) -> dict:
@@ -595,10 +720,16 @@ def _get_product_row_ranges(ws) -> dict[str, dict]:
 
 
 def create_trq_sheet(wb: Workbook, sheet_name: str, quarter: str,
-                     trq_type: str, data: dict, today: date):
-    """Create a new TRQ sheet with initial data."""
+                     trq_type: str, data: dict, today: date,
+                     start_date: str | None = None, end_date: str | None = None):
+    """Create a new TRQ sheet with initial data.
+
+    start_date/end_date are the authoritative human-readable quarter dates from
+    landing-page discovery; when omitted, fall back to the (stale) computed
+    range. Only the row-1 title cell uses them."""
     ws = wb.create_sheet(title=sheet_name)
-    start_date, end_date = get_quarter_date_range(quarter, today)
+    if start_date is None or end_date is None:
+        start_date, end_date = get_quarter_date_range(quarter, today)
     type_label = "Non-FTA" if trq_type == "NFTA" else "FTA"
 
     # Row 1: Title
@@ -942,29 +1073,29 @@ def create_hts_sheet(wb: Workbook):
 
 def main():
     today = date.today()
-    quarter = get_current_quarter(today)
-    log.info("Today: %s, TRQ Quarter: %s", today, quarter)
 
-    start_date, end_date = get_quarter_date_range(quarter, today)
-    log.info("Quarter range: %s to %s", start_date, end_date)
+    # Discover the CURRENT-quarter reports from the official landing page. The
+    # source renames quarter files across program years (e.g. Q1 -> Y2Q1) and
+    # shifts boundary dates, so the filename, label, and dates are READ from the
+    # page, never constructed. FAIL LOUD on any problem -- never silently fall
+    # back to a stale/closed quarter, which is exactly what hid the rollover bug.
+    try:
+        reports = discover_current_reports(today)
+    except RuntimeError as exc:
+        log.error("TRQ report discovery failed: %s", exc)
+        sys.exit(1)
 
-    # Download TRQ CSVs
-    fta_csv = download_csv("FTA", quarter)
-    nfta_csv = download_csv("NFTA", quarter)
+    quarter = reports["FTA"]["quarter"]
+    log.info("Today: %s, current TRQ quarter: %s (%s to %s)",
+             today, quarter, reports["FTA"]["start_str"], reports["FTA"]["end_str"])
 
-    # Fallback to previous quarter if EITHER file is missing.
-    # Both FTA and NFTA must use the same quarter to avoid mixing data.
+    # Download the discovered CSVs (full URLs taken verbatim from the page).
+    fta_csv = download_csv(reports["FTA"]["csv_url"])
+    nfta_csv = download_csv(reports["NFTA"]["csv_url"])
     if fta_csv is None or nfta_csv is None:
-        prev_quarters = {"Q1": "Q4", "Q2": "Q1", "Q3": "Q2", "Q4": "Q3"}
-        prev_q = prev_quarters[quarter]
-        log.info("%s data not fully available, falling back to %s for both FTA and NFTA...", quarter, prev_q)
-        fta_csv = download_csv("FTA", prev_q)
-        nfta_csv = download_csv("NFTA", prev_q)
-        if fta_csv is None or nfta_csv is None:
-            log.error("Could not download TRQ CSV data. Exiting.")
-            sys.exit(1)
-        quarter = prev_q
-        start_date, end_date = get_quarter_date_range(quarter, today)
+        log.error("Could not download current TRQ CSV data (FTA=%s, NFTA=%s). Exiting.",
+                  reports["FTA"]["csv_url"], reports["NFTA"]["csv_url"])
+        sys.exit(1)
 
     # Parse TRQ data
     log.info("Parsing FTA CSV...")
@@ -972,7 +1103,8 @@ def main():
     log.info("Parsing NFTA CSV...")
     nfta_data = parse_trq_csv(nfta_csv)
 
-    # B1 import data
+    # B1 import data. The TRQ "Q1..Q4" label maps to calendar months in a
+    # year-independent way (TRQ_TO_B1_CALENDAR_MONTHS), so this is unchanged.
     b1_data = None
     if should_fetch_b1(quarter, today):
         b1_data = scrape_b1_imports(TRQ_TO_B1_CALENDAR_MONTHS[quarter])
@@ -995,15 +1127,30 @@ def main():
         if "Sheet" in wb.sheetnames:
             del wb["Sheet"]
 
+    # On a quarter transition, preserve the previous quarter's B1 imports. The
+    # single "B1 Imports" sheet is deleted & rewritten every run, so without this
+    # the just-closed quarter's customs data would be silently overwritten with
+    # "not available" until the new quarter's B1 calendar window opens.
+    trq_sheets = [f"non-FTA {quarter}", f"FTA {quarter}"]
+    if not any(s in wb.sheetnames for s in trq_sheets) and "B1 Imports" in wb.sheetnames:
+        prev_q = {"Q1": "Q4", "Q2": "Q1", "Q3": "Q2", "Q4": "Q3"}[quarter]
+        archive = f"B1 Imports {prev_q}"
+        if archive in wb.sheetnames:
+            del wb[archive]
+        wb["B1 Imports"].title = archive
+        log.info("Quarter transition: archived previous B1 data as '%s'", archive)
+
     # Update or create TRQ sheets
     for trq_type, data, prefix in [("NFTA", nfta_data, "non-FTA"), ("FTA", fta_data, "FTA")]:
         sheet_name = f"{prefix} {quarter}"
+        rep = reports[trq_type]
         if sheet_name in wb.sheetnames:
             log.info("Updating existing sheet '%s'...", sheet_name)
             update_trq_sheet(wb[sheet_name], data, today)
         else:
             log.info("Creating new sheet '%s'...", sheet_name)
-            create_trq_sheet(wb, sheet_name, quarter, trq_type, data, today)
+            create_trq_sheet(wb, sheet_name, quarter, trq_type, data, today,
+                             start_date=rep["start_str"], end_date=rep["end_str"])
 
     # B1 sheet
     create_b1_sheet(wb, b1_data, quarter, today)

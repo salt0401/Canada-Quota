@@ -153,6 +153,68 @@ it. This survives transient drops/slow responses and fails a blocked connect fas
 
 ---
 
+## Bug 4 — Program-year rollover renamed the files; scraper silently tracked the closed quarter — FIXED (landing-page discovery)
+
+**Severity:** high (silent — green checkmark, fresh file, *wrong/closed quarter*).
+
+**Symptom:** found by verifying output against the live source on 2026-06-30. The
+scraped numbers were correct, but for the just-**closed** Q4 — while the live
+current quarter had already moved on. Every weekly run would have kept appending
+duplicate frozen-Q4 columns and never tracked the active quarter.
+
+**Root cause:** the TRQ **program year rolled over** and the source renamed the
+quarter files. The current quarter became `TRQ_FTA-Y2Q1.csv` (report title "Year
+2, Quarter 1: June 28, 2026 to September 29, 2026") — a new `Y2` (year-2) prefix.
+The old code built URLs as `TRQ_{FTA,NFTA}-{Q1..Q4}.csv` with no year concept, so
+it requested `TRQ_FTA-Q1.csv` (now **404**) and `TRQ_NFTA-Q1.csv` (now **last
+year's** 2025 Q1), then the **prev-quarter fallback silently used the closed Q4**.
+The new year also changed quotas/caps (Hot-Rolled Sheet 9,523,100 KG/67% →
+8,569,800/71%; Steel Plate 30→33%; Cold-Rolled 32→35%) and shifted boundary dates
+(Q4 ends Jun 27, not the hard-coded Jun 26), so the stale quarter was wrong on
+baselines too.
+
+**Fix (as shipped):** stop constructing URLs/dates. `discover_current_reports()`
+reads the official landing page (`LANDING_URL`), pairs each "Quarter N: <dates>"
+link with its adjacent `[.CSV]` link by shared filename stem, and picks, for both
+FTA and NFTA, the report whose **date range contains today** (most-recent started
+quarter on a gap). It returns the real `csv_url`, a `Q1..Q4` label, and the date
+strings. `main()` uses those; `download_csv(url)` now takes a full URL.
+
+**Critical design rules baked in (do not regress):**
+- **Fail loud, never fall back.** The old silent prev-quarter fallback is *removed*.
+  If discovery fails (page unreachable, structure changed, no current report, CSV
+  link malformed, or FTA/NFTA disagree on the quarter) → `log.error` + `sys.exit(1)`.
+  Silent fallback is exactly what hid this bug. (The auto-retry workflow from Bug 3
+  re-runs on a fresh IP, so a transient discovery failure self-heals.)
+- **Read the `[.CSV]` href verbatim, but validate it ends in `.csv`.** The gov page
+  has at least one malformed link (FTA Q2's `[.CSV]` points to a `.htm`); never
+  reconstruct the filename (casing is inconsistent: `TRQ_nFTA-q2` vs `TRQ_FTA-Q4`).
+- **The `Q1..Q4` label still drives the TRQ↔B1 join, unchanged.**
+  `TRQ_TO_B1_CALENDAR_MONTHS`, `should_fetch_b1`, sheet names, and the B1 sheet all
+  use the label exactly as before — that mapping is year-independent (Year-2 Q1
+  still overlaps Jul–Sep). Selection is by **date range**, not by matching
+  "Quarter N" text (the same label repeats across years).
+- **B1 history is preserved on a quarter transition.** The single "B1 Imports"
+  sheet is deleted/rewritten each run, so `main()` renames the existing one to
+  `B1 Imports {prev_q}` when the new quarter's TRQ sheets don't exist yet —
+  otherwise the just-closed quarter's customs data would be silently overwritten
+  with "not available" until the new B1 calendar window opens (July for Q1).
+
+**Known remaining limitation (by design, documented):** sheet names are still
+year-blind (`f"{prefix} {quarter}"`). At the *next* program-year rollover, next
+year's "FTA Q1" will land in the same sheet as this year's and `update_trq_sheet`
+would mix two years' columns. Acceptable because the landing-page discovery only
+needs to be re-checked roughly yearly anyway — but if this runs unattended past a
+second rollover, give the sheet names a year suffix first.
+
+**Prevention:**
+- Verify output against the **live source**, not just that the run is green — a
+  passing pipeline can silently scrape the wrong thing.
+- Anything keyed on a hard-coded period (`Q1..Q4`, fixed dates, constructed
+  filenames) is fragile across a year boundary. Discover from the source of truth.
+
+---
+
 ## Validation recipe
 
 See the "Validating correctness by hand" section of [../README.md](../README.md):
