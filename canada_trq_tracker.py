@@ -13,10 +13,15 @@ import os
 import platform
 import re
 import sys
-import time
 from datetime import date, datetime
 
 import requests
+from requests.adapters import HTTPAdapter
+
+try:
+    from urllib3.util.retry import Retry
+except ImportError:  # urllib3 vendored inside requests on some installs
+    from requests.packages.urllib3.util.retry import Retry
 from bs4 import BeautifulSoup
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill
@@ -37,6 +42,51 @@ BASE_URL = "https://www.eics-scei.gc.ca/report-rapport"
 B1_URL = f"{BASE_URL}/b1.htm"
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 OUTPUT_FILE = os.path.join(OUTPUT_DIR, "canada_trq_tracker.xlsx")
+
+# ---------------------------------------------------------------------------
+# HTTP session
+# ---------------------------------------------------------------------------
+# The source host (www.eics-scei.gc.ca) sits behind a firewall that
+# intermittently drops connections from cloud/datacenter egress IPs (e.g. some
+# GitHub Actions runners), which surfaces as a TCP *connect timeout* rather than
+# an HTTP error. A browser-like User-Agent plus bounded retries with exponential
+# backoff smooth over transient drops and slow responses. NOTE: a hard block of
+# the runner's IP cannot be fixed here — it requires a fresh egress IP, i.e. a
+# re-run of the job on a new runner. See docs/known-issues.md.
+REQUEST_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/124.0 Safari/537.36"
+    ),
+    "Accept": "text/csv,text/html,application/xhtml+xml,*/*;q=0.8",
+}
+# (connect, read) timeouts: fail a blocked connect quickly, allow slow reads.
+CSV_TIMEOUT = (10, 60)
+B1_TIMEOUT = (10, 120)
+
+
+def _make_session() -> requests.Session:
+    """Build a requests session with browser UA and retry/backoff on both
+    connection failures and retryable HTTP statuses."""
+    retry = Retry(
+        total=3,
+        connect=2,
+        read=2,
+        status=2,
+        backoff_factor=1.5,  # sleeps ~1.5s, 3s, 6s between attempts
+        status_forcelist=(429, 500, 502, 503, 504),
+        allowed_methods=frozenset(["GET"]),
+        raise_on_status=False,
+    )
+    session = requests.Session()
+    session.headers.update(REQUEST_HEADERS)
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
+
+
+SESSION = _make_session()
 
 # The 8 product categories Laura tracks (must match TRQ product names exactly)
 TRACKED_PRODUCTS = [
@@ -192,21 +242,18 @@ def should_fetch_b1(trq_quarter: str, today: date) -> bool:
 def download_csv(trq_type: str, quarter: str) -> str | None:
     """Download TRQ CSV. trq_type is 'FTA' or 'NFTA'. Returns text or None."""
     url = f"{BASE_URL}/TRQ_{trq_type}-{quarter}.csv"
-    for attempt in range(2):
-        try:
-            log.info("Downloading %s (attempt %d)...", url, attempt + 1)
-            resp = requests.get(url, timeout=30)
-            if resp.status_code == 404:
-                log.warning("HTTP 404 for %s", url)
-                return None
-            resp.raise_for_status()
-            resp.encoding = "utf-8"
-            return resp.text
-        except requests.RequestException as exc:
-            log.warning("Download failed: %s", exc)
-            if attempt == 0:
-                time.sleep(5)
-    return None
+    try:
+        log.info("Downloading %s ...", url)
+        resp = SESSION.get(url, timeout=CSV_TIMEOUT)
+        if resp.status_code == 404:
+            log.warning("HTTP 404 for %s", url)
+            return None
+        resp.raise_for_status()
+        resp.encoding = "utf-8"
+        return resp.text
+    except requests.RequestException as exc:
+        log.warning("Download failed for %s: %s", url, exc)
+        return None
 
 
 def parse_trq_csv(csv_text: str) -> dict:
@@ -417,7 +464,7 @@ def scrape_b1_imports(month_range: tuple[int, int]) -> dict[str, dict[str, dict[
     allowed_months = set(range(month_range[0], month_range[1] + 1))
     try:
         log.info("Downloading B1 page (%s)...", B1_URL)
-        resp = requests.get(B1_URL, timeout=60)
+        resp = SESSION.get(B1_URL, timeout=B1_TIMEOUT)
         resp.raise_for_status()
         resp.encoding = "utf-8"
     except requests.RequestException as exc:

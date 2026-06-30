@@ -108,6 +108,51 @@ Hot-Rolled Sheet 21,110.17 t).
 
 ---
 
+## Bug 3 — Weekly run failed: source host dropped the GitHub Actions runner's IP — FIXED (networking hardened)
+
+**Severity:** high (no data published that week; the job hard-fails and emails an
+alert, so it's loud, not silent — but the colleague gets no update).
+
+**Symptom:** the 2026-06-29 scheduled run took 4m31s (vs. the usual ~25s) and
+exited 1 with `Could not download TRQ CSV data. Exiting.` Every attempt logged
+`ConnectTimeoutError ... Connection to www.eics-scei.gc.ca timed out
+(connect timeout=30)`. The four prior Mondays all succeeded unchanged.
+
+**Root cause:** environmental, not a code bug. `www.eics-scei.gc.ca` sits behind
+a firewall that **silently drops TCP connections from some cloud/datacenter
+egress IPs** (the GitHub-hosted Azure runners). The tell is that the failure is a
+*connect timeout* (the TCP handshake never completes) rather than an HTTP 403/404
+— the request never reaches the application layer. Verified during debugging: from
+an ordinary connection the host returns HTTP 200 with full data **even with the
+default `python-requests` User-Agent**, so it is not a UA/WAF block; the only
+variable is the source IP. GitHub's runner IPs rotate, so most runs draw a clean
+IP (success) and the occasional run draws a flagged one (connect timeout). The
+script was correct to exit 1 — it just couldn't reach the source.
+
+**Fix (as shipped):** networking hardened in `canada_trq_tracker.py` — a shared
+`requests.Session` (`SESSION`) with a browser-like User-Agent, a `urllib3 Retry`
+adapter (bounded connect/read/status retries with exponential backoff), and split
+`(connect, read)` timeouts. Both download sites (`download_csv`, B1 scraper) use
+it. This survives transient drops/slow responses and fails a blocked connect fast.
+
+> **Important limitation:** retries inside a single run all use the *same* runner
+> IP, so they cannot beat a *hard* block. The only cure for a blocked IP is a
+> **fresh egress IP** — i.e. re-run the job on a new runner ("Re-run jobs" in the
+> Actions UI, or `gh run rerun <id> --failed`), which provisions a new VM/IP. If
+> failures become frequent, add automatic retry-on-a-fresh-runner (a `workflow_run`
+> companion that re-dispatches on failure, capped via `run_attempt`) or route the
+> fetch through a non-blocked egress/proxy.
+
+**Prevention:**
+- Don't "fix" this by only adding a User-Agent or more in-run retries — the block
+  is at the network layer, below HTTP, and pinned to the run's IP.
+- A sudden jump from ~25s to multi-minute runtime is the fingerprint of network
+  timeouts/retries, not heavier work. Check runtime deltas first.
+- Keep the hard `sys.exit(1)` on download failure — publishing stale/empty data
+  would be worse than a loud failure email.
+
+---
+
 ## Validation recipe
 
 See the "Validating correctness by hand" section of [../README.md](../README.md):
