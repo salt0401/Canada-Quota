@@ -34,7 +34,7 @@ the next Monday run**, or the old code publishes another file first.
 
 ---
 
-## Bug 1 — Weekly update corrupted the TRQ sheets (position drift) — FIXED (commit 13097dc)
+## Bug 1 — Weekly update corrupted the TRQ sheets (position drift) — FIXED COMPLETELY 2026-07-06 (first fix, commit 13097dc, was incomplete)
 
 **Severity:** critical (silently produced garbage data).
 
@@ -52,11 +52,28 @@ recomputed, openpyxl does not rewrite formula references, and values written
 earlier by position got pushed around. Mixing "compute positions once" with
 "mutate positions in a loop" is the trap.
 
-**Fix (as shipped):** after each `insert_rows`, the code now (a) clears the new
-date column first, and (b) **shifts the row references of all downstream products
-down by one** (`update_trq_sheet`, the "Shift ALL subsequent products' row
-references" block). This keeps the cached ranges consistent. Verified clean across
-10 weekly columns of real data.
+**First fix (commit 13097dc) — INCOMPLETE:** after each `insert_rows`, the code
+(a) cleared the new date column first, and (b) shifted the cached row references
+of all downstream products. That fixed **value placement**, but not **formulas
+already written to the sheet**: `insert_rows` physically moves cells without
+rewriting formula text, so every TOTAL `=SUM()` below an insertion point — in
+the just-written column AND in every historical column — kept its stale range.
+The claim originally recorded here ("verified clean across 10 weekly columns")
+was wrong: the verification only checked the newest column, which is always
+written last from fresh ranges and therefore always looks correct. A 2026-07-01
+full-project review found **131 corrupted TOTAL formulas** live in the two Q4
+sheets of the shipped workbook.
+
+**Complete fix (2026-07-06):** `update_trq_sheet` no longer writes TOTAL
+formulas during the value pass at all. After all insertions are done,
+`_rewrite_total_formulas()` re-derives every product's TOTAL in **every** date
+column from the final physical layout (values always sit on the right rows, so
+this is a pure formula repair and is idempotent when nothing shifted — it also
+heals any corruption left by earlier runs). The committed workbook's 131 stale
+Q4 formulas were repaired in the same commit. Zero-country products get a
+literal `0.0` instead of a self-referential `=SUM(Fn:Fn)` circular reference
+(`_write_total_cell`). Both paths are locked in by `tests/test_writer.py`
+against `tests/wb_invariants.py`.
 
 > An alternative, arguably more robust design is **read → merge → rewrite**: read
 > the whole sheet into a model, merge the new column, and re-render every row from
@@ -66,11 +83,15 @@ references" block). This keeps the cached ranges consistent. Verified clean acro
 **Prevention:**
 - Never use `insert_rows` / `delete_rows` against indices cached *before* the
   mutation. Recompute, insert bottom-up, or rebuild from a model.
-- After any writer change, dump the saved workbook and check: contiguous product
-  blocks, no formulas in data cells, no duplicate countries, each TOTAL `SUM()`
-  spans exactly its product's country rows. Don't trust the parsed dict.
+- openpyxl **never** updates formula strings on row insert/delete. Any formula
+  written before a mutation is suspect; write formulas LAST, from final layout.
+- After any writer change, check the saved workbook against
+  `tests/wb_invariants.py` (the executable version of this checklist):
+  contiguous product blocks, no formulas in data cells, no duplicate countries,
+  each TOTAL `SUM()` spans exactly its product's country rows **in every date
+  column, not just the newest one**. Don't trust the parsed dict.
 - Test the update path against a **multi-column, new-country** scenario, not just a
-  fresh first run.
+  fresh first run (`tests/test_writer.py` does this on every push).
 
 ---
 
@@ -137,11 +158,11 @@ it. This survives transient drops/slow responses and fails a blocked connect fas
 
 > **Important limitation:** retries inside a single run all use the *same* runner
 > IP, so they cannot beat a *hard* block. The only cure for a blocked IP is a
-> **fresh egress IP** — i.e. re-run the job on a new runner ("Re-run jobs" in the
-> Actions UI, or `gh run rerun <id> --failed`), which provisions a new VM/IP. If
-> failures become frequent, add automatic retry-on-a-fresh-runner (a `workflow_run`
-> companion that re-dispatches on failure, capped via `run_attempt`) or route the
-> fetch through a non-blocked egress/proxy.
+> **fresh egress IP** — i.e. re-run the job on a new runner, which provisions a
+> new VM/IP. This is automated: `.github/workflows/retry_on_failure.yml` (commit
+> 293c085) re-runs a failed weekly job on a fresh runner via `workflow_run`,
+> capped at two automatic retries via `run_attempt`. Manual fallback: "Re-run
+> jobs" in the Actions UI, or `gh run rerun <id> --failed`.
 
 **Prevention:**
 - Don't "fix" this by only adding a User-Agent or more in-run retries — the block

@@ -13,14 +13,19 @@ GitHub Actions cron and a GitHub Release.
 
 ## Current status
 
-- **Latest meaningful change:** B1 imports are now filtered to the calendar months
-  that align with the active TRQ quarter (the B1 page serves year-to-date data, so
-  unfiltered sums previously mixed in prior-quarter volumes). See
-  [docs/known-issues.md](docs/known-issues.md) Bug 2.
-- **Verified correct (against live sources, by hand):** TRQ utilization values,
-  per-country shares, Max Quota / Max Share, OVER flags, TOTAL formulas, the weekly
-  multi-column update path, and B1 aggregation arithmetic.
-- The weekly cron has been running and committing clean data since 2026-03-30.
+- **Latest meaningful change (2026-07-06):** hardening pass — TOTAL formulas are
+  now rewritten from the final sheet layout every run (completes the Bug 1 fix;
+  the shipped workbook's stale Q4 formulas were repaired in the same commit),
+  zero-utilization products get a literal 0 instead of a circular `=SUM()`, the
+  parser locates the Part A/Part B boundary dynamically and fails loud on a
+  structure change, and a pytest suite (`tests/`) runs on every push.
+- **Previous milestones:** landing-page discovery replacing constructed URLs
+  (Bug 4, commit 1b18dd1); B1 month filtering (Bug 2).
+- **Verified correct (against live sources):** TRQ utilization values, per-country
+  shares, Max Quota / Max Share, OVER flags, TOTAL formulas across ALL date
+  columns (enforced by `tests/wb_invariants.py`), the weekly multi-column update
+  path incl. new-country insertions, and B1 aggregation arithmetic.
+- The weekly cron has been running and committing since 2026-03-30.
 
 To see exactly what changed last, use `git log --oneline` — that is the source of
 truth for "latest version", not this file.
@@ -48,11 +53,16 @@ pip install -r requirements.txt
 python canada_trq_tracker.py
 ```
 
-- No arguments. It uses `date.today()` to pick the TRQ quarter, downloads the live
-  CSV/HTML, and **updates** `data/canada_trq_tracker.xlsx` in place (creating it on
-  first run). Re-running the same day is idempotent (it skips an existing date
-  column).
+- No arguments. It discovers the current TRQ quarter (label, CSV URLs, and date
+  range) from the official landing page, downloads the live CSV/HTML, and
+  **updates** `data/canada_trq_tracker.xlsx` in place (creating it on first run).
+  Re-running the same day is idempotent (it skips an existing date column).
 - Windows + POSIX both supported (date formatting branches on `platform.system()`).
+- **Caution — local runs mutate the bot-committed workbook.** `git pull` first,
+  and don't push a locally-mutated `data/…xlsx` unless that's what you intend:
+  the delivery chain publishes whatever the next CI run finds in the repo.
+- Tests: `pip install -r requirements-dev.txt && python -m pytest tests/ -q`
+  (offline; also run by CI on every push).
 
 ## Architecture (two layers — keep them separate)
 
@@ -64,9 +74,12 @@ python canada_trq_tracker.py
 
 ## Data sources
 
-- TRQ CSVs: `https://www.eics-scei.gc.ca/report-rapport/TRQ_{FTA,NFTA}-{quarter}.csv`
-  (two format variants — old `ExecutionTime` header, new `Textbox` header; the
-  parser detects and handles both).
+- TRQ CSVs: **discovered from the official landing page** (`LANDING_URL` in the
+  script) — the CSV filename, quarter label, and date range are read from the
+  page, never constructed, because the source renames files across program years
+  (`TRQ_FTA-Q1.csv` → `TRQ_FTA-Y2Q1.csv`; see known-issues Bug 4). Two format
+  variants exist — old `ExecutionTime` header, new `Textbox` header; the parser
+  detects and handles both.
 - B1 imports: `https://www.eics-scei.gc.ca/report-rapport/b1.htm` (one large HTML
   table; the page currently serves year-to-date, so the scraper filters to the
   quarter-aligned months in `TRQ_TO_B1_CALENDAR_MONTHS`).
@@ -106,11 +119,15 @@ source, not just the script's output:
 | Path | Purpose |
 |---|---|
 | `canada_trq_tracker.py` | The whole program. |
-| `requirements.txt` | requests, beautifulsoup4, lxml, openpyxl. |
+| `requirements.txt` | Pinned deps: requests, beautifulsoup4, lxml, openpyxl. |
+| `requirements-dev.txt` | Test-only deps (pytest). |
 | `.github/workflows/weekly_scrape.yml` | Monday cron + Release publishing. |
+| `.github/workflows/retry_on_failure.yml` | Auto re-run on a fresh runner when the weekly job fails (IP-block mitigation, capped at 2 retries). |
+| `.github/workflows/tests.yml` | Runs the offline test suite on every push/PR. |
+| `tests/` | pytest suite: parser (incl. real captured fixtures), writer invariants, discovery. |
 | `data/canada_trq_tracker.xlsx` | Output (committed; also published to Release). |
-| `Canadian Quota Template.xlsx` | Laura's reference template (format target). |
+| `Canadian Quota Template.xlsx` | Laura's reference template (format target only — the script never reads it). |
 | `guide.html` | End-user usage guide. |
 | `download_latest.bat` | End-user one-click downloader (pulls the Release). |
 | `docs/known-issues.md` | Bug history & prevention — read before editing. |
-| `docs/superpowers/specs/…design.md` | Original design spec. |
+| `docs/superpowers/specs/…design.md` | Original design spec (quarter-URL section superseded; see marker inside). |

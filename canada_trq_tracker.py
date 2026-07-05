@@ -13,7 +13,9 @@ import os
 import platform
 import re
 import sys
-from datetime import date, datetime
+import time
+from datetime import date
+from urllib.parse import urljoin, urlparse
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -69,7 +71,7 @@ REQUEST_HEADERS = {
 }
 # (connect, read) timeouts: fail a blocked connect quickly, allow slow reads.
 CSV_TIMEOUT = (10, 60)
-B1_TIMEOUT = (10, 120)
+HTML_TIMEOUT = (10, 120)  # landing page and B1 are large/slow HTML pages
 
 
 def _make_session() -> requests.Session:
@@ -148,14 +150,6 @@ for _prod, _codes in HTS_CODE_MAP.items():
         _prefix_8 = _code.replace(".", "")[:8]
         _HTS_REVERSE[_prefix_8] = _prod
 
-# Quarter date ranges  (month, day) boundaries
-QUARTER_RANGES = {
-    "Q1": ("June 27", "September 25"),
-    "Q2": ("September 26", "December 25"),
-    "Q3": ("December 26", "March 25"),
-    "Q4": ("March 26", "June 26"),
-}
-
 # TRQ offset quarter -> overlapping B1 calendar quarter months
 TRQ_TO_B1_CALENDAR_MONTHS: dict[str, tuple[int, int]] = {
     "Q1": (7, 9),
@@ -168,6 +162,10 @@ TRQ_TO_B1_CALENDAR_MONTHS: dict[str, tuple[int, int]] = {
 COUNTRY_NAME_MAP: dict[str, str] = {
     # Both sources use the same government system; add entries if mismatches found.
 }
+
+# Sheet-name prefix per TRQ partner group. main() uses this both to name the
+# sheets and to detect a quarter transition, so the two must never diverge.
+TRQ_SHEET_PREFIX = {"NFTA": "non-FTA", "FTA": "FTA"}
 
 # Excel formatting constants
 YELLOW_FILL = PatternFill(start_color="FFFFFF00", end_color="FFFFFF00", fill_type="solid")
@@ -244,7 +242,8 @@ def should_fetch_b1(trq_quarter: str, today: date) -> bool:
 # ---------------------------------------------------------------------------
 
 def download_csv(url: str) -> str | None:
-    """Download a TRQ CSV by full URL. Returns text, or None on HTTP 404."""
+    """Download a TRQ CSV by full URL. Returns text, or None on HTTP 404 or
+    any download failure that survives the session's retries."""
     try:
         log.info("Downloading %s ...", url)
         resp = SESSION.get(url, timeout=CSV_TIMEOUT)
@@ -259,12 +258,13 @@ def download_csv(url: str) -> str | None:
         return None
 
 
-_MONTHS = {name: num for num, name in enumerate(
-    ["January", "February", "March", "April", "May", "June", "July",
-     "August", "September", "October", "November", "December"], start=1)}
+# Index 0 is a placeholder so list index == month number.
+_MONTH_NAMES = ["", "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"]
+_MONTHS = {name: num for num, name in enumerate(_MONTH_NAMES[1:], start=1)}
 
 
-def _parse_quarter_label(text: str):
+def _parse_quarter_label(text: str) -> tuple[str, date, date, str, str] | None:
     """Parse a landing-page label such as
         'Quarter 1: June 28 – September 29, 2026'
         'Quarter 3: December 26, 2025 – March 25, 2026'
@@ -313,7 +313,7 @@ def discover_current_reports(today: date | None = None) -> dict:
     if today is None:
         today = date.today()
     try:
-        resp = SESSION.get(LANDING_URL, timeout=B1_TIMEOUT)
+        resp = SESSION.get(LANDING_URL, timeout=HTML_TIMEOUT)
         resp.raise_for_status()
         resp.encoding = "utf-8"
     except requests.RequestException as exc:
@@ -327,7 +327,9 @@ def discover_current_reports(today: date | None = None) -> dict:
     # by extension, because the page has at least one malformed [.CSV] -> .htm.
     rows: dict[str, dict] = {}
     for a in soup.find_all("a", href=True):
-        href = a["href"].strip()
+        # Resolve relative hrefs against the landing page so the returned
+        # csv_url is always absolute and fetchable.
+        href = urljoin(LANDING_URL, a["href"].strip())
         base = href.rsplit("/", 1)[-1]
         if not base.upper().startswith("TRQ_"):
             continue
@@ -372,6 +374,13 @@ def discover_current_reports(today: date | None = None) -> dict:
             raise RuntimeError(
                 f"{partner} current report CSV link is not a .csv (malformed page "
                 f"link): {chosen['csv_url']}")
+        # Only ever download from the government's own domain; a page compromise
+        # or scraper bug must not make us fetch (and publish) foreign data.
+        host = urlparse(chosen["csv_url"]).hostname or ""
+        if host != "gc.ca" and not host.endswith(".gc.ca"):
+            raise RuntimeError(
+                f"{partner} current report CSV link points off the gc.ca domain: "
+                f"{chosen['csv_url']}")
         result[partner] = chosen
 
     if result["FTA"]["quarter"] != result["NFTA"]["quarter"]:
@@ -381,21 +390,27 @@ def discover_current_reports(today: date | None = None) -> dict:
     return result
 
 
+# Part A (the 23-product summary table) starts on CSV line 5 in both formats.
+_PART_A_START = 4  # 0-indexed
+# The TRQ program publishes exactly this many product rows. A different count
+# means the source structure changed, which voids the POSITIONAL Part A/Part B
+# match below — publishing anyway would assign countries to the wrong products.
+_EXPECTED_PART_A_ITEMS = 23
+
+
 def parse_trq_csv(csv_text: str) -> dict:
     """Parse TRQ CSV (either format) and return structured data.
 
     Returns:
         {
-            "products": {
-                "Hot-Rolled Sheet": {
-                    "item_number": 3,
-                    "max_quota": 2370500,
-                    "max_share": 0.41,
-                    "total_util": 0.4397,
-                    "countries": {"China": 0.0295, "India": 0.0011, ...}
-                },
-                ...
-            }
+            "Hot-Rolled Sheet": {
+                "item_number": 3,
+                "max_quota": 2370500,
+                "max_share": 0.41,
+                "total_util_pct": 0.4397,
+                "countries": {"China": 0.0295, "India": 0.0011, ...}
+            },
+            ...
         }
     """
     lines = csv_text.splitlines()
@@ -416,41 +431,42 @@ def parse_trq_csv(csv_text: str) -> dict:
 
     log.info("CSV format detected: %s", fmt)
 
-    # --- Part A: lines 5-27 (1-indexed: lines[4:27]) ---
+    # --- Part A: from line 5 to the first blank line ---
+    # The boundary is located dynamically (not hard-coded) so a source-side row
+    # add/remove shifts the Part B walker with it instead of desynchronizing;
+    # the count assert below then fails the run loudly.
     part_a_items: list[dict] = []
-    for i in range(4, 27):
-        if i >= len(lines) or not lines[i].strip():
-            continue
+    i = _PART_A_START
+    while i < len(lines) and lines[i].strip():
         fields = list(csv.reader(io.StringIO(lines[i])))[0]
         o = part_a_offset
         if len(fields) < o + 7:
             log.warning("Part A line %d has only %d fields (expected %d+), skipping: %s",
                         i + 1, len(fields), o + 7, lines[i][:80])
+            i += 1
             continue
-        item_number = int(fields[o])
-        product_name = fields[o + 1].strip()
-        max_quota = int(parse_number(fields[o + 2]))
-        max_share = parse_percent(fields[o + 3])
-        util_kgm_raw = fields[o + 4].strip().strip('"')
-        util_pct_raw = fields[o + 5].strip().strip('"')
-        total_util_kgm = 0.0 if util_kgm_raw == "Max Utilized" else parse_number(util_kgm_raw)
-        total_util_pct = 1.0 if util_pct_raw == "Max Utilized" else parse_percent(util_pct_raw)
-
         part_a_items.append({
-            "item_number": item_number,
-            "product_name": product_name,
-            "max_quota": max_quota,
-            "max_share": max_share,
-            "total_util_kgm": total_util_kgm,
-            "total_util_pct": total_util_pct,
+            "item_number": int(fields[o]),
+            "product_name": fields[o + 1].strip(),
+            "max_quota": int(parse_number(fields[o + 2])),
+            "max_share": parse_percent(fields[o + 3]),
+            # parse_number/parse_percent already map "Max Utilized" to 0.0 / 1.0
+            "total_util_kgm": parse_number(fields[o + 4]),
+            "total_util_pct": parse_percent(fields[o + 5]),
         })
+        i += 1
 
-    # --- Part B: lines 29+ (after blank line 28) ---
-    part_b_start = 28  # 0-indexed
+    if len(part_a_items) != _EXPECTED_PART_A_ITEMS:
+        raise ValueError(
+            f"Part A has {len(part_a_items)} product rows (expected "
+            f"{_EXPECTED_PART_A_ITEMS}); the CSV structure changed and the "
+            f"positional Part A/Part B match cannot be trusted")
+
+    # --- Part B: everything after the blank line that ends Part A ---
+    part_b_start = i + 1
     # Walk Part B sections, matching sequentially to Part A items
     part_b_sections: list[list[dict]] = []
     current_section: list[dict] | None = None
-    in_header = False
 
     for i in range(part_b_start, len(lines)):
         line = lines[i].strip()
@@ -460,7 +476,6 @@ def parse_trq_csv(csv_text: str) -> dict:
             if current_section is not None:
                 part_b_sections.append(current_section)
                 current_section = None
-            in_header = False
             continue
 
         # Check if this is a metadata header line
@@ -469,7 +484,6 @@ def parse_trq_csv(csv_text: str) -> dict:
                 # Previous section ended (no blank line separator — shouldn't happen, but be safe)
                 part_b_sections.append(current_section)
             current_section = []
-            in_header = True
             continue
 
         # Data row (not blank, not header)
@@ -489,6 +503,10 @@ def parse_trq_csv(csv_text: str) -> dict:
                     "total_kgm": total_kgm,
                     "total_pct": total_pct,
                 })
+            else:
+                # Symmetric with the Part A guard: never drop a row silently.
+                log.warning("Part B line %d has only %d fields (expected %d+), skipping: %s",
+                            i + 1, len(fields), o + 5, line[:80])
 
     # Don't forget the last section if file doesn't end with blank line
     if current_section is not None:
@@ -520,9 +538,9 @@ def parse_trq_csv(csv_text: str) -> dict:
                             product_name, a_item["total_util_kgm"], b_total_kgm,
                         )
             else:
+                # Sections exhausted: nothing to consume. Alignment for any
+                # later products is already lost; the warning is the signal.
                 log.warning("No Part B section found for %s (expected non-zero utilization)", product_name)
-                # Still advance b_idx to stay synchronized with Part A ordering
-                # (the section may have been missing or malformed)
         else:
             # Zero utilization — still has a header in Part B but no data rows.
             # The header+blank was counted as an empty section.
@@ -589,15 +607,27 @@ def scrape_b1_imports(month_range: tuple[int, int]) -> dict[str, dict[str, dict[
     allowed_months = set(range(month_range[0], month_range[1] + 1))
     try:
         log.info("Downloading B1 page (%s)...", B1_URL)
-        resp = SESSION.get(B1_URL, timeout=B1_TIMEOUT)
+        resp = SESSION.get(B1_URL, timeout=HTML_TIMEOUT)
         resp.raise_for_status()
         resp.encoding = "utf-8"
     except requests.RequestException as exc:
         log.warning("B1 download failed: %s", exc)
         return None
 
-    log.info("Parsing B1 HTML (%.1f MB)...", len(resp.text) / 1_000_000)
-    soup = BeautifulSoup(resp.text, "lxml")
+    try:
+        return _parse_b1_page(resp.text, allowed_months)
+    except Exception as exc:
+        # B1 is soft-fail BY DESIGN (the sheet then says "not available"); an
+        # unexpected page/format change must not take down the TRQ update.
+        log.warning("B1 parsing failed (page format changed?): %s", exc)
+        return None
+
+
+def _parse_b1_page(html: str, allowed_months: set[int]) -> dict[str, dict[str, dict[str, float]]] | None:
+    """Parse the B1 HTML into {product: {country: {tonnes, value}}}, keeping
+    only rows whose Month falls in ``allowed_months``."""
+    log.info("Parsing B1 HTML (%.1f MB)...", len(html) / 1_000_000)
+    soup = BeautifulSoup(html, "lxml")
 
     # Find the main data table (the one with >100 rows)
     main_table = None
@@ -664,6 +694,61 @@ def scrape_b1_imports(month_range: tuple[int, int]) -> dict[str, dict[str, dict[
 # ---------------------------------------------------------------------------
 # Excel Workbook Management
 # ---------------------------------------------------------------------------
+
+# Weekly utilization snapshots occupy column E onward (A=product, B=country,
+# C=max quota, D=max share); the OVER flag sits right after the newest date.
+FIRST_DATE_COL = 5
+
+
+def _write_text(ws, row: int, col: int, text):
+    """Write scraped text defensively: openpyxl stores any string starting
+    with '=' as a formula, so an odd/hostile country name could inject a
+    formula into the published workbook. Force literal string storage."""
+    cell = ws.cell(row=row, column=col, value=text)
+    if isinstance(text, str) and text.startswith("="):
+        cell.data_type = "s"
+    return cell
+
+
+def _write_total_cell(ws, row: int, col: int,
+                      first_row: int | None, last_row: int | None):
+    """Write one product's TOTAL cell for one date column: a SUM over its
+    country rows, or a literal 0.0 when there are no country rows — a SUM
+    range would then include the TOTAL cell itself (an Excel circular
+    reference, which is exactly what a zero-utilization product produced
+    before this helper existed)."""
+    cell = ws.cell(row=row, column=col)
+    if first_row is not None and last_row is not None and first_row <= last_row < row:
+        letter = get_column_letter(col)
+        cell.value = f"=SUM({letter}{first_row}:{letter}{last_row})"
+    else:
+        cell.value = 0.0
+    cell.number_format = "0.0%"
+    cell.fill = YELLOW_FILL
+    return cell
+
+
+def _rewrite_total_formulas(ws, first_date_col: int, last_date_col: int):
+    """Rewrite every product's TOTAL cell in every date column from the
+    sheet's CURRENT physical layout.
+
+    ws.insert_rows() shifts cell contents but never rewrites formula text, so
+    any TOTAL formula written before an insertion above it keeps a stale row
+    range (docs/known-issues.md Bug 1 — the original fix repaired only the
+    in-memory ranges cache, not formulas already on the sheet). Country VALUES
+    always sit on the correct rows, so re-deriving each SUM range from the
+    final layout is a pure repair and is idempotent when nothing shifted."""
+    ranges = _get_product_row_ranges(ws)
+    for r in ranges.values():
+        total_row = r["total_row"]
+        if not total_row:
+            continue
+        first, last = r["first_row"], r["last_country_row"]
+        if last >= total_row:  # zero-country product: its block IS the TOTAL row
+            first, last = None, None
+        for col in range(first_date_col, last_date_col + 1):
+            _write_total_cell(ws, total_row, col, first, last)
+
 
 def _find_over_col(ws) -> int | None:
     """Find the column index (1-based) of the OVER header in row 2."""
@@ -747,8 +832,8 @@ def create_trq_sheet(wb: Workbook, sheet_name: str, quarter: str,
 
     # Data rows
     row_num = 3
-    date_col = 5  # Column E
-    over_col = 6  # Column F
+    date_col = FIRST_DATE_COL  # Column E
+    over_col = FIRST_DATE_COL + 1  # Column F
 
     for product in TRACKED_PRODUCTS:
         prod_data = data.get(product, {
@@ -765,11 +850,7 @@ def create_trq_sheet(wb: Workbook, sheet_name: str, quarter: str,
             # No countries — just write TOTAL row with 0
             ws.cell(row=row_num, column=1, value=product)
             ws.cell(row=row_num, column=2, value="TOTAL")
-            col_letter = get_column_letter(date_col)
-            total_cell = ws.cell(row=row_num, column=date_col)
-            total_cell.value = 0.0
-            total_cell.number_format = "0.0%"
-            total_cell.fill = YELLOW_FILL
+            _write_total_cell(ws, row_num, date_col, None, None)
             row_num += 1
             continue
 
@@ -777,7 +858,7 @@ def create_trq_sheet(wb: Workbook, sheet_name: str, quarter: str,
         for country in sorted_countries:
             share = countries[country]
             ws.cell(row=row_num, column=1, value=product)
-            ws.cell(row=row_num, column=2, value=country)
+            _write_text(ws, row_num, 2, country)
 
             quota_cell = ws.cell(row=row_num, column=3, value=max_quota)
             quota_cell.number_format = "#,##0"
@@ -799,11 +880,7 @@ def create_trq_sheet(wb: Workbook, sheet_name: str, quarter: str,
         # TOTAL row
         ws.cell(row=row_num, column=1, value=product)
         ws.cell(row=row_num, column=2, value="TOTAL")
-        col_letter = get_column_letter(date_col)
-        total_cell = ws.cell(row=row_num, column=date_col)
-        total_cell.value = f"=SUM({col_letter}{first_country_row}:{col_letter}{last_country_row})"
-        total_cell.number_format = "0.0%"
-        total_cell.fill = YELLOW_FILL
+        _write_total_cell(ws, row_num, date_col, first_country_row, last_country_row)
         row_num += 1
 
     log.info("Created sheet '%s' with %d rows", sheet_name, row_num - 1)
@@ -840,7 +917,11 @@ def update_trq_sheet(ws, data: dict, today: date):
     # Get product row ranges
     ranges = _get_product_row_ranges(ws)
 
-    # Write data for each row
+    # Write country values for the new column. TOTAL cells are NOT written
+    # here: rows may still be inserted below (new countries), and insert_rows
+    # shifts cells without rewriting formula text, so any formula written now
+    # could go stale. All TOTAL cells are (re)written in one pass at the end,
+    # from the final physical layout.
     for row in range(3, ws.max_row + 1):
         prod = ws.cell(row=row, column=1).value
         country = ws.cell(row=row, column=2).value
@@ -851,18 +932,7 @@ def update_trq_sheet(ws, data: dict, today: date):
         prod = str(prod).strip()
         country = str(country).strip()
 
-        if country == "TOTAL":
-            # Write SUM formula
-            if prod in ranges:
-                r = ranges[prod]
-                col_letter = get_column_letter(new_date_col)
-                first = r["first_row"]
-                last = r["last_country_row"]
-                total_cell = ws.cell(row=row, column=new_date_col)
-                total_cell.value = f"=SUM({col_letter}{first}:{col_letter}{last})"
-                total_cell.number_format = "0.0%"
-                total_cell.fill = YELLOW_FILL
-        else:
+        if country != "TOTAL":
             # Country row — find share value
             prod_data = data.get(prod, {})
             countries = prod_data.get("countries", {})
@@ -875,7 +945,6 @@ def update_trq_sheet(ws, data: dict, today: date):
             # If country not in current data, leave blank
 
     # Check for new countries not yet in the sheet
-    rows_inserted = 0
     for prod in TRACKED_PRODUCTS:
         prod_data = data.get(prod, {})
         countries = prod_data.get("countries", {})
@@ -892,12 +961,11 @@ def update_trq_sheet(ws, data: dict, today: date):
 
         for country in sorted(countries.keys()):
             if country not in existing_countries:
-                log.info("New country '%s' for product '%s' — appending row", country, prod)
                 total_row = r["total_row"]
                 if total_row:
+                    log.info("New country '%s' for product '%s' — appending row", country, prod)
                     ws.insert_rows(total_row)
                     new_row = total_row
-                    rows_inserted += 1
 
                     # Update current product's ranges
                     r["total_row"] = total_row + 1
@@ -915,7 +983,7 @@ def update_trq_sheet(ws, data: dict, today: date):
                             other_r["total_row"] += 1
 
                     ws.cell(row=new_row, column=1, value=prod)
-                    ws.cell(row=new_row, column=2, value=country)
+                    _write_text(ws, new_row, 2, country)
 
                     quota_cell = ws.cell(row=new_row, column=3, value=prod_data.get("max_quota", 0))
                     quota_cell.number_format = "#,##0"
@@ -925,13 +993,16 @@ def update_trq_sheet(ws, data: dict, today: date):
 
                     cell = ws.cell(row=new_row, column=new_date_col, value=countries[country])
                     cell.number_format = "0.0%"
+                else:
+                    log.warning("New country '%s' for product '%s' has no TOTAL row "
+                                "to insert above — row NOT added", country, prod)
 
-                    # Update TOTAL SUM range
-                    col_letter = get_column_letter(new_date_col)
-                    total_cell = ws.cell(row=r["total_row"], column=new_date_col)
-                    total_cell.value = f"=SUM({col_letter}{r['first_row']}:{col_letter}{r['last_country_row']})"
-                    total_cell.number_format = "0.0%"
-                    total_cell.fill = YELLOW_FILL
+    # All rows are in their final positions now. Rewrite every TOTAL cell in
+    # every date column from the final layout — this writes the new column's
+    # TOTALs for the first time, repairs any formula made stale by the inserts
+    # above (in the new AND all historical columns), and heals corruption left
+    # by earlier runs of the pre-fix code.
+    _rewrite_total_formulas(ws, FIRST_DATE_COL, new_date_col)
 
     # Rewrite OVER column in new position (one column to the right)
     # The old OVER column is now the new date column — do NOT clear it.
@@ -960,25 +1031,36 @@ def update_trq_sheet(ws, data: dict, today: date):
     log.info("Updated sheet '%s' with column '%s'", ws.title, date_header)
 
 
-def create_b1_sheet(wb: Workbook, b1_data: dict | None, trq_quarter: str, today: date):
-    """Create or rewrite the B1 Imports sheet."""
+def create_b1_sheet(wb: Workbook, b1_data: dict | None, trq_quarter: str, today: date,
+                    quarter_end: date | None = None):
+    """Create or rewrite the B1 Imports sheet.
+
+    quarter_end is the discovered TRQ quarter's end date; the B1 calendar
+    window always falls in that date's year (true for all four quarters,
+    including year-wrapping Q3), so it labels the window correctly even when
+    today lies outside the window (early Q3 in December, or a stale landing
+    page leaving last quarter selected past its end)."""
     sheet_name = "B1 Imports"
     if sheet_name in wb.sheetnames:
         del wb[sheet_name]
 
     ws = wb.create_sheet(title=sheet_name)
 
-    # Determine calendar quarter label
+    # Determine calendar quarter label. Prefer the quarter's real end date
+    # (window year == end-date year, all quarters); fall back to a heuristic
+    # on today only if no end date was provided.
     cal_start_m, cal_end_m = TRQ_TO_B1_CALENDAR_MONTHS[trq_quarter]
-    month_names = ["", "January", "February", "March", "April", "May", "June",
-                   "July", "August", "September", "October", "November", "December"]
-    year = today.year
-    cal_label = f"{month_names[cal_start_m]} 1 to {month_names[cal_end_m]} {30 if cal_end_m in (6, 9, 11) else 31}, {year}"
+    if quarter_end is not None:
+        year = quarter_end.year
+    else:
+        year = today.year + 1 if today.month > cal_end_m else today.year
+    cal_label = (f"{_MONTH_NAMES[cal_start_m]} 1 to {_MONTH_NAMES[cal_end_m]} "
+                 f"{30 if cal_end_m in (4, 6, 9, 11) else 31}, {year}")
 
     # Row 1: Title
     ws.cell(row=1, column=1, value=f"B1 Import Data - Calendar Quarter: {cal_label}")
 
-    # Rows 3-7: Disclaimers
+    # Rows 3-8: Disclaimers
     ws.cell(row=3, column=1,
             value="NOTE: B1 data reflects actual customs entries using calendar quarters (Jan-Mar, Apr-Jun, etc.).")
     ws.cell(row=4, column=1,
@@ -990,7 +1072,7 @@ def create_b1_sheet(wb: Workbook, b1_data: dict | None, trq_quarter: str, today:
     ws.cell(row=7, column=1,
             value="These HTS codes are a selected subset; the official TRQ product scope may include additional tariff items not tracked here.")
     ws.cell(row=8, column=1,
-            value=f"Imports are limited to calendar months {month_names[cal_start_m]}-{month_names[cal_end_m]} to align with the TRQ quarter; the quarter may be partially complete (data current through the latest available customs month).")
+            value=f"Imports are limited to calendar months {_MONTH_NAMES[cal_start_m]}-{_MONTH_NAMES[cal_end_m]} to align with the TRQ quarter; the quarter may be partially complete (data current through the latest available customs month).")
 
     # Row 9: Headers
     headers = ["Product Category", "Country", "Total Tonnes", "Total C$1000", "Avg C$/Tonne"]
@@ -1016,7 +1098,7 @@ def create_b1_sheet(wb: Workbook, b1_data: dict | None, trq_quarter: str, today:
             avg_price = value * 1000 / tonnes if tonnes > 0 else 0.0
 
             ws.cell(row=row_num, column=1, value=product)
-            ws.cell(row=row_num, column=2, value=country)
+            _write_text(ws, row_num, 2, country)
 
             t_cell = ws.cell(row=row_num, column=3, value=tonnes)
             t_cell.number_format = "#,##0.00"
@@ -1097,11 +1179,16 @@ def main():
                   reports["FTA"]["csv_url"], reports["NFTA"]["csv_url"])
         sys.exit(1)
 
-    # Parse TRQ data
-    log.info("Parsing FTA CSV...")
-    fta_data = parse_trq_csv(fta_csv)
-    log.info("Parsing NFTA CSV...")
-    nfta_data = parse_trq_csv(nfta_csv)
+    # Parse TRQ data. FAIL LOUD on any parse problem — a structurally changed
+    # CSV must never be written to the workbook as plausible-looking data.
+    try:
+        log.info("Parsing FTA CSV...")
+        fta_data = parse_trq_csv(fta_csv)
+        log.info("Parsing NFTA CSV...")
+        nfta_data = parse_trq_csv(nfta_csv)
+    except Exception as exc:
+        log.error("TRQ CSV parse failed: %s", exc)
+        sys.exit(1)
 
     # B1 import data. The TRQ "Q1..Q4" label maps to calendar months in a
     # year-independent way (TRQ_TO_B1_CALENDAR_MONTHS), so this is unchanged.
@@ -1119,7 +1206,11 @@ def main():
 
     if os.path.exists(OUTPUT_FILE):
         log.info("Loading existing workbook: %s", OUTPUT_FILE)
-        wb = load_workbook(OUTPUT_FILE)
+        try:
+            wb = load_workbook(OUTPUT_FILE)
+        except Exception as exc:
+            log.error("Could not open existing workbook %s: %s", OUTPUT_FILE, exc)
+            sys.exit(1)
     else:
         log.info("Creating new workbook")
         wb = Workbook()
@@ -1131,7 +1222,7 @@ def main():
     # single "B1 Imports" sheet is deleted & rewritten every run, so without this
     # the just-closed quarter's customs data would be silently overwritten with
     # "not available" until the new quarter's B1 calendar window opens.
-    trq_sheets = [f"non-FTA {quarter}", f"FTA {quarter}"]
+    trq_sheets = [f"{TRQ_SHEET_PREFIX['NFTA']} {quarter}", f"{TRQ_SHEET_PREFIX['FTA']} {quarter}"]
     if not any(s in wb.sheetnames for s in trq_sheets) and "B1 Imports" in wb.sheetnames:
         prev_q = {"Q1": "Q4", "Q2": "Q1", "Q3": "Q2", "Q4": "Q3"}[quarter]
         archive = f"B1 Imports {prev_q}"
@@ -1141,8 +1232,8 @@ def main():
         log.info("Quarter transition: archived previous B1 data as '%s'", archive)
 
     # Update or create TRQ sheets
-    for trq_type, data, prefix in [("NFTA", nfta_data, "non-FTA"), ("FTA", fta_data, "FTA")]:
-        sheet_name = f"{prefix} {quarter}"
+    for trq_type, data in [("NFTA", nfta_data), ("FTA", fta_data)]:
+        sheet_name = f"{TRQ_SHEET_PREFIX[trq_type]} {quarter}"
         rep = reports[trq_type]
         if sheet_name in wb.sheetnames:
             log.info("Updating existing sheet '%s'...", sheet_name)
@@ -1153,13 +1244,28 @@ def main():
                              start_date=rep["start_str"], end_date=rep["end_str"])
 
     # B1 sheet
-    create_b1_sheet(wb, b1_data, quarter, today)
+    create_b1_sheet(wb, b1_data, quarter, today, quarter_end=reports["FTA"]["end_date"])
 
     # HTS reference sheet
     create_hts_sheet(wb)
 
-    # Save
-    wb.save(OUTPUT_FILE)
+    # Save atomically: write to a temp file, then swap it in. A crash mid-save
+    # must never truncate the accumulated history file. On local Windows runs
+    # the destination can be transiently locked (Excel has it open, or the
+    # OneDrive sync engine holds a handle) — retry briefly, and on final
+    # failure keep the .tmp (it holds the new data; *.tmp is gitignored).
+    tmp_file = OUTPUT_FILE + ".tmp"
+    wb.save(tmp_file)
+    for attempt in range(3):
+        try:
+            os.replace(tmp_file, OUTPUT_FILE)
+            break
+        except PermissionError as exc:
+            if attempt == 2:
+                log.error("Could not replace %s (locked by Excel/OneDrive?): %s — "
+                          "new data preserved at %s", OUTPUT_FILE, exc, tmp_file)
+                sys.exit(1)
+            time.sleep(2)
     log.info("Workbook saved to %s", OUTPUT_FILE)
     log.info("Done.")
 

@@ -1,0 +1,2 @@
+# Test-only dependencies (CI test job and local development).
+pytest==9.1.1

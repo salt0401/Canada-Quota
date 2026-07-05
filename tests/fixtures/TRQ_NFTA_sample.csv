@@ -1,0 +1,137 @@
+Textbox137,Textbox143,Textbox155,Textbox156,Textbox146,Textbox147,Textbox148,Textbox149,Textbox150,Textbox151,Textbox152,Textbox153,Textbox154,Textbox157,Textbox158,Textbox159,Textbox160,Textbox161,Textbox162,Textbox163,Textbox164,Textbox165,Textbox166,Textbox167
+Non-Free Trade Agreement Partners: Total Quarterly Volumes and Utilization per TRQ,1. Carbon Steel Ingots: Quarterly Utilization per Country – Maximum share for any single country is 97%,2. Steel Billets and Blooms: Quarterly Utilization per Country – Maximum share for any single country is 70%,3. Hot-Rolled Sheet: Quarterly Utilization per Country – Maximum share for any single country is 41%,4. Floor Plate: Quarterly Utilization per Country – Maximum share for any single country is 98%,5. Steel Plate: Quarterly Utilization per Country – Maximum share for any single country is 36%,6. Cold-Rolled Sheet: Quarterly Utilization per Country – Maximum share for any single country is 56%,7. Tin: Quarterly Utilization per Country – Maximum share for any single country is 84%,8. Coated Steel Sheet: Quarterly Utilization per Country – Maximum share for any single country is 37%,9. Pre-Painted: Quarterly Utilization per Country – Maximum share for any single country is 58%,10. Rebar: Quarterly Utilization per Country – Maximum share for any single country is 29%,11. Hot-Rolled Bar: Quarterly Utilization per Country – Maximum share for any single country is 42%,12. Wire Rod: Quarterly Utilization per Country – Maximum share for any single country is 45%,13. Cold Finished Bars: Quarterly Utilization per Country – Maximum share for any single country is 54%,14. Structural Steel: Quarterly Utilization per Country – Maximum share for any single country is 52%,15. Steel Wire: Quarterly Utilization per Country – Maximum share for any single country is 70%,16. Stainless Steel Ingots: Quarterly Utilization per Country – Maximum share for any single country is 75%,17. Stainless Steel Billets and Blooms: Quarterly Utilization per Country – Maximum share for any single country is 87%,18. Line Pipe: Quarterly Utilization per Country – Maximum share for any single country is 59%,19. Oil Country Tubular Goods: Quarterly Utilization per Country – Maximum share for any single country is 53%,20. Standard Pipe: Quarterly Utilization per Country – Maximum share for any single country is 21%,21. Large Diameter Line Pipe: Quarterly Utilization per Country – Maximum share for any single country is 70%,22. Piling Pipe: Quarterly Utilization per Country – Maximum share for any single country is 92%,23. Hollow Structural Sections: Quarterly Utilization per Country – Maximum share for any single country is 40%
+
+Textboxb6db942229da46bd872d39356f1404bb,Textbox0874cee6ce8b4c488f07adddedeb99e0,Textbox38,Textbox6defe02f6a5b4da79422566035a32381,Textbox8183768284fd4c8a9fecbd60b0f055be,Textboxecf89731bdd942ec8daa85d7b51cbfd4,Textbox18,CONTROL_ITEMS_Level_1_Commodity_Code,CONTROL_ITEMS_Level_1_Ceiling_Level,ID23_Products_Quota_Country_Ceiling___,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,CONTROL_ITEMS_Quota_Remaining
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),1,Carbon Steel Ingots,"5,600",97%,0,0.00%,"5,600"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),2,Steel Billets and Blooms,"30,472,500",70%,"16,515",0.05%,"30,455,985"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),3,Hot-Rolled Sheet,"2,366,700",41%,"756,943",31.98%,"1,609,757"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),4,Floor Plate,"2,400",98%,0,0.00%,"2,400"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),5,Steel Plate,"5,201,200",36%,"1,124,043",21.61%,"4,077,157"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),6,Cold-Rolled Sheet,"6,168,400",56%,"5,269,568",85.43%,"898,832"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),7,Tin,"382,900",84%,"115,514",30.17%,"267,386"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),8,Coated Steel Sheet,"18,732,800",37%,"18,726,374",99.97%,"6,426"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),9,Pre-Painted,"3,466,000",58%,"2,217,345",63.97%,"1,248,655"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),10,Rebar,"13,445,100",29%,"8,867,632",65.95%,"4,577,468"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),11,Hot-Rolled Bar,"5,886,100",42%,"4,438,229",75.40%,"1,447,871"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),12,Wire Rod,"1,571,700",45%,0,0.00%,"1,571,700"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),13,Cold Finished Bars,"214,400",54%,"114,337",53.33%,"100,063"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),14,Structural Steel,"3,753,500",52%,"3,691,288",98.34%,"62,212"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),15,Steel Wire,"4,114,600",70%,"3,698,020",89.88%,"416,580"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),16,Stainless Steel Ingots,100,75%,0,0.00%,100
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),17,Stainless Steel Billets and Blooms,"32,900",87%,0,0.00%,"32,900"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),18,Line Pipe,"2,472,000",59%,"1,602,201",64.81%,"869,799"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),19,Oil Country Tubular Goods,"3,126,500",53%,"993,716",31.78%,"2,132,784"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),20,Standard Pipe,"10,369,200",21%,"9,919,260",95.66%,"449,940"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),21,Large Diameter Line Pipe,"927,900",70%,0,0.00%,"927,900"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),22,Piling Pipe,"2,689,800",92%,"507,659",18.87%,"2,182,141"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),23,Hollow Structural Sections,"2,398,500",40%,"1,928,383",80.40%,"470,117"
+
+Textboxb6db942229da46bd872d39356f1404bb2,Textbox6defe02f6a5b4da79422566035a32382,Textbox8183768284fd4c8a9fecbd60b0f055be2,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_21,Textbox7,Textbox24
+
+Textboxb6db942229da46bd872d39356f1404bb3,Textbox6defe02f6a5b4da79422566035a32383,Textbox8183768284fd4c8a9fecbd60b0f055be3,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_11,Textbox125,Textbox87
+Country,Current utilization (KGM),Share of total utilization (%),India,"16,515",0.05%,"16,515",0.05%
+
+Textboxb6db942229da46bd872d39356f1404bb4,Textbox6defe02f6a5b4da79422566035a32384,Textbox8183768284fd4c8a9fecbd60b0f055be4,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,Textbox8,Textbox89
+Country,Current utilization (KGM),Share of total utilization (%),China,418,0.02%,"756,943",31.98%
+Country,Current utilization (KGM),Share of total utilization (%),Taiwan,"756,525",31.97%,"756,943",31.98%
+
+Textboxb6db942229da46bd872d39356f1404bb5,Textbox6defe02f6a5b4da79422566035a32385,Textbox8183768284fd4c8a9fecbd60b0f055be5,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_1,Textbox103,Textbox106
+
+Textboxb6db942229da46bd872d39356f1404bb6,Textbox6defe02f6a5b4da79422566035a32386,Textbox8183768284fd4c8a9fecbd60b0f055be6,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_4,Textbox130,Textbox131
+Country,Current utilization (KGM),Share of total utilization (%),China,"1,124,043",21.61%,"1,124,043",21.61%
+
+Textboxb6db942229da46bd872d39356f1404bb7,Textbox6defe02f6a5b4da79422566035a32387,Textbox8183768284fd4c8a9fecbd60b0f055be7,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_2,Textbox9,Textbox91
+Country,Current utilization (KGM),Share of total utilization (%),China,"1,964",0.03%,"5,269,568",85.43%
+Country,Current utilization (KGM),Share of total utilization (%),India,48,0.00%,"5,269,568",85.43%
+Country,Current utilization (KGM),Share of total utilization (%),Pakistan,"678,006",10.99%,"5,269,568",85.43%
+Country,Current utilization (KGM),Share of total utilization (%),Taiwan,"3,238,094",52.49%,"5,269,568",85.43%
+Country,Current utilization (KGM),Share of total utilization (%),Thailand,41,0.00%,"5,269,568",85.43%
+Country,Current utilization (KGM),Share of total utilization (%),Türkiye,"1,351,415",21.91%,"5,269,568",85.43%
+
+Textboxb6db942229da46bd872d39356f1404bb8,Textbox6defe02f6a5b4da79422566035a32388,Textbox8183768284fd4c8a9fecbd60b0f055be8,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,Textbox10,Textbox31
+Country,Current utilization (KGM),Share of total utilization (%),Taiwan,"115,514",30.17%,"115,514",30.17%
+
+Textboxb6db942229da46bd872d39356f1404bb9,Textbox6defe02f6a5b4da79422566035a32389,Textbox8183768284fd4c8a9fecbd60b0f055be9,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,Textbox11,Textbox61
+Country,Current utilization (KGM),Share of total utilization (%),China,"49,869",0.27%,"18,726,374",99.97%
+Country,Current utilization (KGM),Share of total utilization (%),Egypt,"5,006,380",26.73%,"18,726,374",99.97%
+Country,Current utilization (KGM),Share of total utilization (%),Indonesia,"128,845",0.69%,"18,726,374",99.97%
+Country,Current utilization (KGM),Share of total utilization (%),Pakistan,"4,661,530",24.88%,"18,726,374",99.97%
+Country,Current utilization (KGM),Share of total utilization (%),Taiwan,"6,924,710",36.97%,"18,726,374",99.97%
+Country,Current utilization (KGM),Share of total utilization (%),Thailand,"542,150",2.89%,"18,726,374",99.97%
+Country,Current utilization (KGM),Share of total utilization (%),Türkiye,"1,412,890",7.54%,"18,726,374",99.97%
+
+Textboxb6db942229da46bd872d39356f1404bb10,Textbox6defe02f6a5b4da79422566035a32390,Textbox8183768284fd4c8a9fecbd60b0f055be10,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_10,Textbox13,Textbox65
+Country,Current utilization (KGM),Share of total utilization (%),China,"207,065",5.97%,"2,217,345",63.97%
+Country,Current utilization (KGM),Share of total utilization (%),Taiwan,"2,010,280",58.00%,"2,217,345",63.97%
+
+Textboxb6db942229da46bd872d39356f1404bb11,Textbox6defe02f6a5b4da79422566035a32391,Textbox8183768284fd4c8a9fecbd60b0f055be11,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_3,Textbox15,Textbox94
+Country,Current utilization (KGM),Share of total utilization (%),India,"3,733,626",27.77%,"8,867,632",65.95%
+Country,Current utilization (KGM),Share of total utilization (%),Taiwan,"49,878",0.37%,"8,867,632",65.95%
+Country,Current utilization (KGM),Share of total utilization (%),Thailand,"3,897,208",28.99%,"8,867,632",65.95%
+Country,Current utilization (KGM),Share of total utilization (%),United Arab Emirates,"1,186,920",8.83%,"8,867,632",65.95%
+
+Textboxb6db942229da46bd872d39356f1404bb12,Textbox6defe02f6a5b4da79422566035a32392,Textbox8183768284fd4c8a9fecbd60b0f055be12,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_9,Textbox46,Textbox92
+Country,Current utilization (KGM),Share of total utilization (%),Brazil,"5,062",0.09%,"4,438,229",75.40%
+Country,Current utilization (KGM),Share of total utilization (%),China,"865,178",14.70%,"4,438,229",75.40%
+Country,Current utilization (KGM),Share of total utilization (%),Taiwan,"1,095,895",18.62%,"4,438,229",75.40%
+Country,Current utilization (KGM),Share of total utilization (%),Türkiye,"2,472,094",42.00%,"4,438,229",75.40%
+
+Textboxb6db942229da46bd872d39356f1404bb13,Textbox6defe02f6a5b4da79422566035a32393,Textbox8183768284fd4c8a9fecbd60b0f055be13,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_5,Textbox64,Textbox98
+
+Textboxb6db942229da46bd872d39356f1404bb14,Textbox6defe02f6a5b4da79422566035a32394,Textbox8183768284fd4c8a9fecbd60b0f055be14,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,Textbox66,Textbox101
+Country,Current utilization (KGM),Share of total utilization (%),Brazil,"114,247",53.29%,"114,337",53.33%
+Country,Current utilization (KGM),Share of total utilization (%),Taiwan,90,0.04%,"114,337",53.33%
+
+Textboxb6db942229da46bd872d39356f1404bb15,Textbox6defe02f6a5b4da79422566035a32395,Textbox8183768284fd4c8a9fecbd60b0f055be15,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_13,Textbox67,Textbox107
+Country,Current utilization (KGM),Share of total utilization (%),India,"81,651",2.18%,"3,691,288",98.34%
+Country,Current utilization (KGM),Share of total utilization (%),Taiwan,"685,988",18.28%,"3,691,288",98.34%
+Country,Current utilization (KGM),Share of total utilization (%),Thailand,"1,307,441",34.83%,"3,691,288",98.34%
+Country,Current utilization (KGM),Share of total utilization (%),Türkiye,"1,616,208",43.06%,"3,691,288",98.34%
+
+Textboxb6db942229da46bd872d39356f1404bb32,Textbox6defe02f6a5b4da79422566035a32412,Textbox8183768284fd4c8a9fecbd60b0f055be32,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,Textbox69,Textbox110
+Country,Current utilization (KGM),Share of total utilization (%),Cambodia,"68,448",1.66%,"3,698,020",89.88%
+Country,Current utilization (KGM),Share of total utilization (%),China,"1,079,544",26.24%,"3,698,020",89.88%
+Country,Current utilization (KGM),Share of total utilization (%),Egypt,"1,534,014",37.28%,"3,698,020",89.88%
+Country,Current utilization (KGM),Share of total utilization (%),India,"1,799",0.04%,"3,698,020",89.88%
+Country,Current utilization (KGM),Share of total utilization (%),Indonesia,"20,720",0.50%,"3,698,020",89.88%
+Country,Current utilization (KGM),Share of total utilization (%),Oman,"70,280",1.71%,"3,698,020",89.88%
+Country,Current utilization (KGM),Share of total utilization (%),Taiwan,"48,491",1.18%,"3,698,020",89.88%
+Country,Current utilization (KGM),Share of total utilization (%),Thailand,"568,784",13.82%,"3,698,020",89.88%
+Country,Current utilization (KGM),Share of total utilization (%),Türkiye,"305,940",7.44%,"3,698,020",89.88%
+
+Textboxb6db942229da46bd872d39356f1404bb31,Textbox6defe02f6a5b4da79422566035a32411,Textbox8183768284fd4c8a9fecbd60b0f055be31,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_14,Textbox71,Textbox111
+
+Textboxb6db942229da46bd872d39356f1404bb30,Textbox6defe02f6a5b4da79422566035a32410,Textbox8183768284fd4c8a9fecbd60b0f055be30,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_6,Textbox73,Textbox113
+
+Textboxb6db942229da46bd872d39356f1404bb29,Textbox6defe02f6a5b4da79422566035a32409,Textbox8183768284fd4c8a9fecbd60b0f055be29,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,Textbox75,Textbox114
+Country,Current utilization (KGM),Share of total utilization (%),China,"12,600",0.51%,"1,602,201",64.81%
+Country,Current utilization (KGM),Share of total utilization (%),India,"1,451,608",58.72%,"1,602,201",64.81%
+Country,Current utilization (KGM),Share of total utilization (%),South Africa,17,0.00%,"1,602,201",64.81%
+Country,Current utilization (KGM),Share of total utilization (%),Thailand,"59,996",2.43%,"1,602,201",64.81%
+Country,Current utilization (KGM),Share of total utilization (%),United Arab Emirates,"77,980",3.15%,"1,602,201",64.81%
+
+Textboxb6db942229da46bd872d39356f1404bb28,Textbox6defe02f6a5b4da79422566035a32408,Textbox8183768284fd4c8a9fecbd60b0f055be28,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_15,Textbox77,Textbox115
+Country,Current utilization (KGM),Share of total utilization (%),China,"624,140",19.96%,"993,716",31.78%
+Country,Current utilization (KGM),Share of total utilization (%),Kazakhstan,"154,072",4.93%,"993,716",31.78%
+Country,Current utilization (KGM),Share of total utilization (%),Thailand,"215,504",6.89%,"993,716",31.78%
+
+Textboxb6db942229da46bd872d39356f1404bb27,Textbox6defe02f6a5b4da79422566035a32407,Textbox8183768284fd4c8a9fecbd60b0f055be27,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_7,Textbox79,Textbox118
+Country,Current utilization (KGM),Share of total utilization (%),China,"214,474",2.07%,"9,919,260",95.66%
+Country,Current utilization (KGM),Share of total utilization (%),India,"2,158,893",20.82%,"9,919,260",95.66%
+Country,Current utilization (KGM),Share of total utilization (%),Indonesia,"1,634,978",15.77%,"9,919,260",95.66%
+Country,Current utilization (KGM),Share of total utilization (%),Qatar,"90,670",0.87%,"9,919,260",95.66%
+Country,Current utilization (KGM),Share of total utilization (%),Taiwan,"1,206,221",11.63%,"9,919,260",95.66%
+Country,Current utilization (KGM),Share of total utilization (%),Thailand,"757,548",7.31%,"9,919,260",95.66%
+Country,Current utilization (KGM),Share of total utilization (%),Türkiye,"2,163,520",20.86%,"9,919,260",95.66%
+Country,Current utilization (KGM),Share of total utilization (%),United Arab Emirates,"1,692,956",16.33%,"9,919,260",95.66%
+
+Textboxb6db942229da46bd872d39356f1404bb26,Textbox6defe02f6a5b4da79422566035a32406,Textbox8183768284fd4c8a9fecbd60b0f055be26,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,Textbox81,Textbox119
+
+Textboxb6db942229da46bd872d39356f1404bb24,Textbox6defe02f6a5b4da79422566035a32404,Textbox8183768284fd4c8a9fecbd60b0f055be24,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,Textbox83,Textbox121
+Country,Current utilization (KGM),Share of total utilization (%),China,"507,659",18.87%,"507,659",18.87%
+
+Textboxb6db942229da46bd872d39356f1404bb25,Textbox6defe02f6a5b4da79422566035a32405,Textbox8183768284fd4c8a9fecbd60b0f055be25,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_8,Textbox85,Textbox122
+Country,Current utilization (KGM),Share of total utilization (%),China,"950,806",39.64%,"1,928,383",80.40%
+Country,Current utilization (KGM),Share of total utilization (%),India,"109,251",4.55%,"1,928,383",80.40%
+Country,Current utilization (KGM),Share of total utilization (%),Taiwan,"868,326",36.20%,"1,928,383",80.40%
+

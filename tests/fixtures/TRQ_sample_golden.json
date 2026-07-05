@@ -1,0 +1,209 @@
+{
+ "FTA": {
+  "Coated Steel Sheet": {
+   "countries": {
+    "Australia": 0.0304,
+    "Austria": 0.060899999999999996,
+    "Belgium": 0.0451,
+    "Finland": 0.0146,
+    "Germany": 0.0001,
+    "Korea, Republic of": 0.0382,
+    "Netherlands": 0.0195,
+    "Sweden": 0.0341,
+    "Vietnam": 0.0213
+   },
+   "item_number": 8,
+   "max_quota": 31128200,
+   "max_share": 0.25,
+   "total_util_pct": 0.2641
+  },
+  "Cold-Rolled Sheet": {
+   "countries": {
+    "Austria": 0.0068000000000000005,
+    "Germany": 0.10679999999999999,
+    "Sweden": 0.20559999999999998,
+    "Vietnam": 0.0175
+   },
+   "item_number": 6,
+   "max_quota": 2785800,
+   "max_share": 0.35,
+   "total_util_pct": 0.33659999999999995
+  },
+  "Hot-Rolled Bar": {
+   "countries": {
+    "Australia": 0.0025,
+    "Germany": 0.2285,
+    "Italy": 0.0017000000000000001,
+    "Japan": 0.0085,
+    "Korea, Republic of": 0.1253,
+    "Luxembourg": 0.0019,
+    "Romania": 0.0095,
+    "Spain": 0.0236
+   },
+   "item_number": 11,
+   "max_quota": 8750300,
+   "max_share": 0.58,
+   "total_util_pct": 0.40159999999999996
+  },
+  "Hot-Rolled Sheet": {
+   "countries": {
+    "Japan": 0.3165,
+    "Korea, Republic of": 0.6835
+   },
+   "item_number": 3,
+   "max_quota": 8569800,
+   "max_share": 0.71,
+   "total_util_pct": 1.0
+  },
+  "Rebar": {
+   "countries": {
+    "Czech Republic": 0.0007000000000000001,
+    "Germany": 0.0832,
+    "Portugal": 0.34590000000000004
+   },
+   "item_number": 10,
+   "max_quota": 28710400,
+   "max_share": 0.45,
+   "total_util_pct": 0.42979999999999996
+  },
+  "Steel Plate": {
+   "countries": {
+    "Australia": 0.0452,
+    "Austria": 0.0248,
+    "Belgium": 0.0009,
+    "Finland": 0.0008,
+    "France": 0.2212,
+    "Germany": 0.0518,
+    "Japan": 0.0053,
+    "Korea, Republic of": 0.3287,
+    "Netherlands": 0.0005,
+    "Spain": 0.0002,
+    "Sweden": 0.0229
+   },
+   "item_number": 5,
+   "max_quota": 38517700,
+   "max_share": 0.33,
+   "total_util_pct": 0.7023
+  },
+  "Structural Steel": {
+   "countries": {
+    "Germany": 0.0021,
+    "Italy": 0.0032,
+    "Japan": 0.0204,
+    "Korea, Republic of": 0.69,
+    "Luxembourg": 0.0012,
+    "United Kingdom": 0.0004,
+    "Vietnam": 0.17980000000000002
+   },
+   "item_number": 14,
+   "max_quota": 3467600,
+   "max_share": 0.69,
+   "total_util_pct": 0.897
+  },
+  "Wire Rod": {
+   "countries": {
+    "Germany": 0.0029,
+    "Korea, Republic of": 0.0339,
+    "Malaysia": 0.4926,
+    "Netherlands": 0.0146
+   },
+   "item_number": 12,
+   "max_quota": 16514800,
+   "max_share": 0.59,
+   "total_util_pct": 0.544
+  }
+ },
+ "NFTA": {
+  "Coated Steel Sheet": {
+   "countries": {
+    "China": 0.0027,
+    "Egypt": 0.2673,
+    "Indonesia": 0.0069,
+    "Pakistan": 0.2488,
+    "Taiwan": 0.3697,
+    "Thailand": 0.028900000000000002,
+    "T\u00fcrkiye": 0.0754
+   },
+   "item_number": 8,
+   "max_quota": 18732800,
+   "max_share": 0.37,
+   "total_util_pct": 0.9997
+  },
+  "Cold-Rolled Sheet": {
+   "countries": {
+    "China": 0.0003,
+    "India": 0.0,
+    "Pakistan": 0.1099,
+    "Taiwan": 0.5249,
+    "Thailand": 0.0,
+    "T\u00fcrkiye": 0.2191
+   },
+   "item_number": 6,
+   "max_quota": 6168400,
+   "max_share": 0.56,
+   "total_util_pct": 0.8543000000000001
+  },
+  "Hot-Rolled Bar": {
+   "countries": {
+    "Brazil": 0.0009,
+    "China": 0.147,
+    "Taiwan": 0.1862,
+    "T\u00fcrkiye": 0.42
+   },
+   "item_number": 11,
+   "max_quota": 5886100,
+   "max_share": 0.42,
+   "total_util_pct": 0.754
+  },
+  "Hot-Rolled Sheet": {
+   "countries": {
+    "China": 0.0002,
+    "Taiwan": 0.3197
+   },
+   "item_number": 3,
+   "max_quota": 2366700,
+   "max_share": 0.41,
+   "total_util_pct": 0.31980000000000003
+  },
+  "Rebar": {
+   "countries": {
+    "India": 0.2777,
+    "Taiwan": 0.0037,
+    "Thailand": 0.2899,
+    "United Arab Emirates": 0.0883
+   },
+   "item_number": 10,
+   "max_quota": 13445100,
+   "max_share": 0.29,
+   "total_util_pct": 0.6595
+  },
+  "Steel Plate": {
+   "countries": {
+    "China": 0.2161
+   },
+   "item_number": 5,
+   "max_quota": 5201200,
+   "max_share": 0.36,
+   "total_util_pct": 0.2161
+  },
+  "Structural Steel": {
+   "countries": {
+    "India": 0.0218,
+    "Taiwan": 0.18280000000000002,
+    "Thailand": 0.3483,
+    "T\u00fcrkiye": 0.43060000000000004
+   },
+   "item_number": 14,
+   "max_quota": 3753500,
+   "max_share": 0.52,
+   "total_util_pct": 0.9834
+  },
+  "Wire Rod": {
+   "countries": {},
+   "item_number": 12,
+   "max_quota": 1571700,
+   "max_share": 0.45,
+   "total_util_pct": 0.0
+  }
+ }
+}

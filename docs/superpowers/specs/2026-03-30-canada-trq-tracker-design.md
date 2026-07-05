@@ -413,6 +413,17 @@ Static reference sheet copied from Laura's template — lists HTS codes per prod
 
 ## Quarterly Transition Logic
 
+> **⚠️ SUPERSEDED (2026-06-30, commit 1b18dd1).** Everything in this section —
+> the calendar-derived `get_current_quarter()`, the constructed
+> `TRQ_{FTA,NFTA}-{quarter}.csv` URLs, the hard-coded quarter boundary dates,
+> and the prev-quarter 404 fallback — was **removed** after the Year-2 program
+> rollover renamed the files (`TRQ_FTA-Y2Q1.csv`) and shifted the boundary
+> dates, causing the fallback to silently track the closed quarter
+> (docs/known-issues.md Bug 4). The current mechanism is
+> `discover_current_reports()`: quarter label, CSV URL, and date range are all
+> READ from the official landing page, and any discovery problem fails loud.
+> This section is kept only as historical design context.
+
 **Quarter date ranges (for both FTA and NFTA):**
 - Q1: June 27 to September 25
 - Q2: September 26 to December 25

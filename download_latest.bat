@@ -5,7 +5,7 @@ echo ============================================
 echo.
 echo Downloading latest Excel file from GitHub...
 echo.
-curl.exe -L -o "%USERPROFILE%\Desktop\canada_trq_tracker.xlsx" ^
+curl.exe -L --fail -o "%USERPROFILE%\Desktop\canada_trq_tracker.xlsx" ^
   "https://github.com/salt0401/Canada-Quota/releases/latest/download/canada_trq_tracker.xlsx"
 echo.
 if %ERRORLEVEL% EQU 0 (

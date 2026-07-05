@@ -1,4 +1,10 @@
-requests>=2.31.0
-beautifulsoup4>=4.12.0
-lxml>=5.0.0
-openpyxl>=3.1.0
+# Pinned exact versions: CI installs fresh every Monday with a write-capable
+# token, so unpinned installs would run whatever PyPI served that morning.
+# Bump deliberately (edit here, run the test suite), not implicitly.
+# NOTE: only DIRECT deps are pinned; transitives (urllib3, certifi, soupsieve,
+# et_xmlfile, ...) still resolve fresh. For full lockdown, switch to a
+# pip-compile lockfile with --generate-hashes.
+requests==2.34.2
+beautifulsoup4==4.15.0
+lxml==6.1.1
+openpyxl==3.1.5

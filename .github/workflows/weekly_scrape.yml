@@ -7,15 +7,27 @@ on:
 permissions:
   contents: write
 
+# Never let a manual dispatch overlap the scheduled run or an in-flight
+# auto-retry: overlapping jobs would race on `git push`.
+# Known trade-off: GitHub keeps only ONE pending run per group — if a retry
+# attempt is queued and another run queues after it, the pending retry is
+# cancelled (conclusion 'cancelled', which retry_on_failure.yml ignores) and
+# the superseding run does the same work instead. Acceptable for a weekly cron.
+concurrency:
+  group: weekly-trq-update
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 15   # normal run ~25s; IP-block runs ~5m. A hang must not stall the auto-retry for 6h.
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'
 
       - run: pip install -r requirements.txt
 
@@ -30,7 +42,9 @@ jobs:
           git push
 
       - name: Update GitHub Release with latest Excel
-        uses: softprops/action-gh-release@v2
+        # Third-party action holding a write token: pinned to a commit SHA so a
+        # moved tag can't silently swap the code. SHA = tag v2 (2026-07).
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           tag_name: latest
           name: Latest TRQ Data
