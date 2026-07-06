@@ -5,6 +5,11 @@ name: Retry failed TRQ update
 # IP-specific block (see docs/known-issues.md). Re-running provisions a NEW runner
 # with a different egress IP, which normally succeeds. This workflow does that
 # automatically, capped via run_attempt so it can never loop forever.
+#
+# Known trade-off: this fires on ANY failure, including the deterministic
+# fail-loud aborts (parse-shape change, missing workbook, validation gate), so
+# those burn two pointless retries and delay the failure email by ~30 min.
+# Accepted: the cap bounds the cost, and a retry can never make bad data green.
 on:
   workflow_run:
     workflows: ["Weekly Canada TRQ Update"]

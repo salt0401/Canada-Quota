@@ -236,6 +236,43 @@ second rollover, give the sheet names a year suffix first.
 
 ---
 
+## Hardening pass 2026-07-06 — fail-loud extended to the parse & writer layers
+
+Bug 4's lesson ("a green run can publish wrong data") originally produced
+fail-loud guards only at the network layer. They now cover the whole pipeline;
+all of these end the run with `log.error` + `sys.exit(1)` **before** the CI
+commit step can publish anything:
+
+- **Parse shape:** Part A row count ≠ 23; ALL tracked products missing from the
+  parse; ≥ `_PART_AB_MISMATCH_LIMIT` products whose Part A/Part B totals
+  disagree (a couple of mismatches remain warn-only by design — Bug 2's
+  per-product anomaly stance is unchanged, the threshold only catches
+  *systematic* desync).
+- **Writer:** a TRQ sheet with no OVER header (previously warn-and-skip, which
+  silently froze that sheet forever on a green run).
+- **Workbook lifecycle:** a missing `data/canada_trq_tracker.xlsx` refuses to
+  silently rebuild (all history would be lost and published); restore it or set
+  `TRQ_ALLOW_NEW_WORKBOOK=1` for a deliberate init. A corrupt existing file
+  also aborts.
+- **Post-save gate:** every run saves to `data/canada_trq_tracker.tmp.xlsx`
+  (a real `.xlsx` extension — openpyxl refuses to open `*.tmp`), re-opens it,
+  and runs `validate_workbook()` (the in-script version of the Bug 1 invariant
+  checklist, checking EVERY date column). Only a validated file replaces the
+  real one; a failing file is kept for inspection and the run exits 1, so the
+  auto-retry fires and the failure emails.
+
+### Environment note — local clone lives inside OneDrive
+
+The working copy (including `.git`) sits in a OneDrive-synced folder. OneDrive
+can transiently lock or sync-shuffle files under `.git/`, which is a known
+source of repo weirdness, and it also locks the xlsx during sync (the save path
+retries and preserves a `.tmp.xlsx` on failure). CI is unaffected. If repo
+corruption is ever observed locally, prefer a clone outside OneDrive (e.g.
+`C:\dev\Canada-Quota`) for development and treat the OneDrive copy as
+data-only.
+
+---
+
 ## Validation recipe
 
 See the "Validating correctness by hand" section of [../README.md](../README.md):

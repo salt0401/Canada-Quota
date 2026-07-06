@@ -3,9 +3,17 @@ __pycache__/
 *.pyo
 .pytest_cache/
 
-# Transient atomic-save file (data/canada_trq_tracker.xlsx.tmp); must never be
-# committed by the CI's `git add data/` if a crash leaves one behind.
+# Transient atomic-save file (data/canada_trq_tracker.tmp.xlsx — keeps a real
+# .xlsx extension because openpyxl refuses *.tmp for the validation gate);
+# must never be committed by the CI's `git add data/` if a crash leaves one.
 *.tmp
+*.tmp.xlsx
 
 # Distribution bundle — derived from download_latest.bat + guide.html, regenerated as needed
 download_latest.zip
+
+# Personal correspondence — kept locally, not in the (public) repo.
+# NOTE: still present in git history before 2026-07-06; scrubbing history
+# requires git filter-repo + force push (owner's call).
+email_to_laura.txt
+letter received.txt

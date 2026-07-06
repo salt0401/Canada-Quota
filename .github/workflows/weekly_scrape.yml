@@ -22,7 +22,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15   # normal run ~25s; IP-block runs ~5m. A hang must not stall the auto-retry for 6h.
     steps:
+      # ref: master (not the default frozen github.sha) so auto-retry reruns
+      # see commits pushed by earlier attempts. Without it, a run that pushed
+      # data but failed later (e.g. at the Release step) dooms every rerun to
+      # a non-fast-forward push rejection. With it, the rerun's same-day
+      # idempotency skips the duplicate date column; the re-saved workbook
+      # still differs byte-wise (openpyxl re-serialization), so the rerun
+      # pushes a small harmless fast-forward churn commit and the Release
+      # step then succeeds.
       - uses: actions/checkout@v4
+        with:
+          ref: master
 
       - uses: actions/setup-python@v5
         with:

@@ -222,6 +222,142 @@ def test_b1_sheet_year_from_quarter_end_date():
         assert expect in wb["B1 Imports"].cell(row=1, column=1).value, (quarter, today)
 
 
+def test_update_missing_over_column_fails_loud():
+    """A hand-edited sheet without its OVER header must raise, not silently
+    skip this and every future weekly update."""
+    wb = _fresh_sheet()
+    ws = wb["non-FTA Q1"]
+    ws.cell(row=2, column=t.FIRST_DATE_COL + 1).value = None  # delete OVER header
+    import pytest
+    with pytest.raises(RuntimeError, match="OVER"):
+        t.update_trq_sheet(ws, WEEK1, W2)
+
+
+def test_date_headers_not_yellow_after_update():
+    """Only the OVER header is highlighted; a new date header written into the
+    old OVER cell must not inherit its yellow fill."""
+    wb = _fresh_sheet()
+    t.update_trq_sheet(wb["non-FTA Q1"], WEEK1, W2)
+    ws = _roundtrip(wb)["non-FTA Q1"]
+    assert ws.cell(row=2, column=t.FIRST_DATE_COL + 1).fill.fill_type is None
+    over_cell = ws.cell(row=2, column=t.FIRST_DATE_COL + 2)
+    assert over_cell.value == "OVER" and over_cell.fill.fill_type == "solid"
+
+
+# --- _load_or_init_workbook guard --------------------------------------------
+
+def test_missing_workbook_fails_loud(tmp_path, monkeypatch):
+    import pytest
+    monkeypatch.setattr(t, "OUTPUT_FILE", str(tmp_path / "wb.xlsx"))
+    monkeypatch.delenv("TRQ_ALLOW_NEW_WORKBOOK", raising=False)
+    with pytest.raises(SystemExit) as e:
+        t._load_or_init_workbook()
+    assert e.value.code == 1   # non-zero is the contract: the commit step must not run
+    monkeypatch.setenv("TRQ_ALLOW_NEW_WORKBOOK", "1")
+    wb = t._load_or_init_workbook()   # deliberate init is allowed
+    assert wb.sheetnames == []
+
+
+def test_existing_workbook_loads_and_corrupt_fails(tmp_path, monkeypatch):
+    import pytest
+    path = tmp_path / "wb.xlsx"
+    monkeypatch.setattr(t, "OUTPUT_FILE", str(path))
+    _fresh_sheet().save(path)
+    assert "non-FTA Q1" in t._load_or_init_workbook().sheetnames
+    path.write_bytes(b"not a zip archive")
+    with pytest.raises(SystemExit) as e:
+        t._load_or_init_workbook()
+    assert e.value.code == 1
+
+
+# --- validate_workbook (the post-save gate) -----------------------------------
+
+def _saved(tmp_path, wb):
+    p = str(tmp_path / "gate.xlsx")
+    wb.save(p)
+    return p
+
+
+def test_gate_passes_good_workbook(tmp_path):
+    t.validate_workbook(_saved(tmp_path, _fresh_sheet()))
+
+
+def test_gate_rejects_each_corruption(tmp_path):
+    import pytest
+    col = t.FIRST_DATE_COL
+
+    wb = _fresh_sheet()
+    ws = wb["non-FTA Q1"]
+    tr = product_blocks(ws)["Steel Plate"]["total_row"]
+    ws.cell(row=tr, column=col).value = "=SUM(E3:E3)"      # stale/shifted range
+    with pytest.raises(RuntimeError, match="stale/shifted"):
+        t.validate_workbook(_saved(tmp_path, wb))
+
+    wb = _fresh_sheet()
+    ws = wb["non-FTA Q1"]
+    china_row = product_blocks(ws)["Hot-Rolled Sheet"]["countries"][0][0]
+    ws.cell(row=china_row, column=col).value = "=SUM(A1:A2)"   # formula in data cell
+    with pytest.raises(RuntimeError, match="numeric or blank"):
+        t.validate_workbook(_saved(tmp_path, wb))
+
+    wb = _fresh_sheet()
+    ws = wb["non-FTA Q1"]
+    wr = product_blocks(ws)["Wire Rod"]["total_row"]
+    ws.cell(row=wr, column=col).value = f"=SUM(E{wr}:E{wr})"   # circular self-sum
+    with pytest.raises(RuntimeError, match="not 0"):
+        t.validate_workbook(_saved(tmp_path, wb))
+
+    wb = _fresh_sheet()
+    ws = wb["non-FTA Q1"]
+    ws.cell(row=2, column=t.FIRST_DATE_COL + 1).value = None   # no OVER header
+    with pytest.raises(RuntimeError, match="no OVER header"):
+        t.validate_workbook(_saved(tmp_path, wb))
+
+    wb = _fresh_sheet()
+    ws = wb["non-FTA Q1"]
+    china_row = product_blocks(ws)["Hot-Rolled Sheet"]["countries"][0][0]
+    ws.insert_rows(china_row + 1)                               # duplicate country
+    ws.cell(row=china_row + 1, column=1).value = "Hot-Rolled Sheet"
+    ws.cell(row=china_row + 1, column=2).value = "China"
+    with pytest.raises(RuntimeError, match="duplicate"):
+        t.validate_workbook(_saved(tmp_path, wb))
+
+
+def test_gate_checks_historical_columns_too(tmp_path):
+    """The gate's whole point is EVERY date column — a newest-only check is
+    exactly the blind spot that hid the original Bug 1 corruption."""
+    import pytest
+    wb = _fresh_sheet()
+    ws = wb["non-FTA Q1"]
+    t.update_trq_sheet(ws, WEEK1, W2)   # two date columns now
+    tr = product_blocks(ws)["Steel Plate"]["total_row"]
+    ws.cell(row=tr, column=t.FIRST_DATE_COL).value = "=SUM(E3:E3)"  # corrupt OLD column only
+    with pytest.raises(RuntimeError, match="stale/shifted"):
+        t.validate_workbook(_saved(tmp_path, wb))
+
+
+def test_gate_rejects_country_row_without_product_label(tmp_path):
+    """A hand-edited row (country in B, blank A) is counted by the writer's
+    range logic but invisible to the gate's walker — it must fail with an
+    actionable message, not a misleading stale-formula error."""
+    import pytest
+    wb = _fresh_sheet()
+    ws = wb["non-FTA Q1"]
+    china_row = product_blocks(ws)["Hot-Rolled Sheet"]["countries"][0][0]
+    ws.insert_rows(china_row + 1)
+    ws.cell(row=china_row + 1, column=2).value = "Chile"   # column A left blank
+    ws.cell(row=china_row + 1, column=t.FIRST_DATE_COL).value = 0.02
+    with pytest.raises(RuntimeError, match="no product"):
+        t.validate_workbook(_saved(tmp_path, wb))
+
+
+def test_gate_ignores_non_trq_sheets(tmp_path):
+    wb = _fresh_sheet()
+    t.create_b1_sheet(wb, None, "Q1", W1, quarter_end=date(2026, 9, 29))
+    t.create_hts_sheet(wb)
+    t.validate_workbook(_saved(tmp_path, wb))
+
+
 def test_b1_sheet_year_heuristic_fallback():
     """Without a quarter_end (legacy call shape), the today-based heuristic
     still handles the December Q3 case."""

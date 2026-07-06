@@ -55,8 +55,15 @@ python canada_trq_tracker.py
 
 - No arguments. It discovers the current TRQ quarter (label, CSV URLs, and date
   range) from the official landing page, downloads the live CSV/HTML, and
-  **updates** `data/canada_trq_tracker.xlsx` in place (creating it on first run).
-  Re-running the same day is idempotent (it skips an existing date column).
+  **updates** `data/canada_trq_tracker.xlsx` in place. Re-running the same day
+  is idempotent (it skips an existing date column).
+- **Fail-loud guards** (`sys.exit(1)`): discovery/download failure, CSV parse
+  failure (wrong Part A count, all tracked products missing, widespread Part
+  A/B mismatch), a TRQ sheet missing its OVER header, a **missing workbook**
+  (set `TRQ_ALLOW_NEW_WORKBOOK=1` only for a deliberate first-time init — a
+  silent rebuild would publish a history-less file), and a saved workbook that
+  fails `validate_workbook()` — every run re-opens the file it just wrote and
+  checks the known-issues invariants before the pipeline can commit it.
 - Windows + POSIX both supported (date formatting branches on `platform.system()`).
 - **Caution — local runs mutate the bot-committed workbook.** `git pull` first,
   and don't push a locally-mutated `data/…xlsx` unless that's what you intend:

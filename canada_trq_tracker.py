@@ -396,6 +396,10 @@ _PART_A_START = 4  # 0-indexed
 # means the source structure changed, which voids the POSITIONAL Part A/Part B
 # match below — publishing anyway would assign countries to the wrong products.
 _EXPECTED_PART_A_ITEMS = 23
+# Part A vs Part B per-product KGM totals: a few mismatches are a warn-only
+# data anomaly (deliberate; see known-issues Bug 2 prevention), but at this
+# many the positional match itself is broken and the parse aborts.
+_PART_AB_MISMATCH_LIMIT = 5
 
 
 def parse_trq_csv(csv_text: str) -> dict:
@@ -515,6 +519,7 @@ def parse_trq_csv(csv_text: str) -> dict:
     # --- Match Part B sections to Part A items ---
     result: dict[str, dict] = {}
     b_idx = 0
+    kgm_mismatches = 0
 
     for a_item in part_a_items:
         product_name = a_item["product_name"]
@@ -533,6 +538,7 @@ def parse_trq_csv(csv_text: str) -> dict:
                 if section and a_item["total_util_kgm"] > 0:
                     b_total_kgm = section[0]["total_kgm"]
                     if abs(b_total_kgm - a_item["total_util_kgm"]) > 1:
+                        kgm_mismatches += 1
                         log.warning(
                             "Part A/B mismatch for %s: Part A util=%.0f, Part B total=%.0f",
                             product_name, a_item["total_util_kgm"], b_total_kgm,
@@ -556,6 +562,23 @@ def parse_trq_csv(csv_text: str) -> dict:
                 "total_util_pct": a_item["total_util_pct"],
                 "countries": countries,
             }
+
+    # A handful of per-product KGM mismatches is a data anomaly (warn-only, by
+    # design); mismatches on MANY products means the positional Part A/Part B
+    # match desynchronized and nothing in the dict can be trusted.
+    if kgm_mismatches >= _PART_AB_MISMATCH_LIMIT:
+        raise ValueError(
+            f"{kgm_mismatches} products have Part A/Part B utilization totals that "
+            f"disagree (limit {_PART_AB_MISMATCH_LIMIT}); positional match "
+            f"desynchronized — CSV structure changed")
+
+    # ALL tracked products missing is not an anomaly, it is a parse/format
+    # failure (labels renamed, columns shifted) — abort rather than publish a
+    # green run with an all-blank week.
+    if not result:
+        raise ValueError(
+            "CSV parsed but NONE of the tracked products were found; product "
+            "labels or CSV structure likely changed")
 
     # Validate: all tracked products should be present
     for prod in TRACKED_PRODUCTS:
@@ -750,6 +773,95 @@ def _rewrite_total_formulas(ws, first_date_col: int, last_date_col: int):
             _write_total_cell(ws, total_row, col, first, last)
 
 
+_SUM_FORMULA_RE = re.compile(r"^=SUM\(([A-Z]+)(\d+):([A-Z]+)(\d+)\)$")
+
+
+def validate_workbook(path: str):
+    """Post-save gate: re-open the SAVED workbook and check every TRQ sheet
+    against the invariants from docs/known-issues.md (Bug 1 prevention).
+    Raises RuntimeError on the first violation so the caller can abort BEFORE
+    the pipeline commits/publishes a corrupt file.
+
+    Checks, per product block, in EVERY date column (not just the newest —
+    that is how the original corruption stayed hidden): contiguous blocks, no
+    duplicate countries, numeric-or-blank country data cells (never formulas),
+    and a TOTAL that is =SUM() over exactly the block's country rows, or a
+    literal 0 for a zero-country product (never a self-referential SUM)."""
+    wb = load_workbook(path)
+    prefixes = tuple(f"{p} " for p in TRQ_SHEET_PREFIX.values())
+    for name in wb.sheetnames:
+        if not name.startswith(prefixes):
+            continue
+        ws = wb[name]
+        over_col = _find_over_col(ws)
+        if over_col is None:
+            raise RuntimeError(f"[{name}] no OVER header in row 2")
+        last_date_col = over_col - 1
+
+        # Walk product blocks from the physical layout
+        blocks: dict[str, dict] = {}
+        order: list[str] = []
+        for row in range(3, ws.max_row + 1):
+            prod = ws.cell(row=row, column=1).value
+            country = ws.cell(row=row, column=2).value
+            # A country with no product label (a hand-edited row) is counted
+            # by the writer's range logic but would be invisible to this
+            # walker — reject it with an actionable message instead of a
+            # misleading stale-formula error on the block's TOTAL.
+            if (not prod or not str(prod).strip()) and country and str(country).strip():
+                raise RuntimeError(
+                    f"[{name}] row {row} has '{country}' in column B but no product "
+                    f"in column A — fill in the product label")
+            if not prod or not country:
+                continue
+            prod, country = str(prod).strip(), str(country).strip()
+            if prod not in blocks:
+                blocks[prod] = {"rows": [], "total_row": None}
+                order.append(prod)
+            elif prod != order[-1]:
+                raise RuntimeError(f"[{name}] product block '{prod}' is not contiguous (row {row})")
+            if country == "TOTAL":
+                if blocks[prod]["total_row"] is not None:
+                    raise RuntimeError(f"[{name}] '{prod}' has two TOTAL rows")
+                blocks[prod]["total_row"] = row
+            else:
+                if blocks[prod]["total_row"] is not None:
+                    raise RuntimeError(f"[{name}] '{prod}' has country '{country}' after its TOTAL row")
+                blocks[prod]["rows"].append((row, country))
+
+        for prod, b in blocks.items():
+            names = [c for _, c in b["rows"]]
+            if len(names) != len(set(names)):
+                raise RuntimeError(f"[{name}] '{prod}' has duplicate countries")
+            total_row = b["total_row"]
+            if total_row is None:
+                raise RuntimeError(f"[{name}] '{prod}' has no TOTAL row")
+            for col in range(FIRST_DATE_COL, last_date_col + 1):
+                for row, country in b["rows"]:
+                    v = ws.cell(row=row, column=col).value
+                    if v is not None and not isinstance(v, (int, float)):
+                        raise RuntimeError(
+                            f"[{name}] '{prod}'/{country} r{row}c{col} holds {v!r} "
+                            f"(data cells must be numeric or blank)")
+                v = ws.cell(row=total_row, column=col).value
+                if not b["rows"]:
+                    if v not in (0, 0.0):
+                        raise RuntimeError(
+                            f"[{name}] '{prod}' zero-country TOTAL r{total_row}c{col} is {v!r}, not 0")
+                    continue
+                m = _SUM_FORMULA_RE.match(v) if isinstance(v, str) else None
+                if not m:
+                    raise RuntimeError(
+                        f"[{name}] '{prod}' TOTAL r{total_row}c{col} is {v!r}, not a =SUM() formula")
+                first, last = int(m.group(2)), int(m.group(4))
+                want_first, want_last = b["rows"][0][0], b["rows"][-1][0]
+                if m.group(1) != m.group(3) or (first, last) != (want_first, want_last) or last >= total_row:
+                    raise RuntimeError(
+                        f"[{name}] '{prod}' TOTAL r{total_row}c{col} range {v!r} != "
+                        f"country rows {want_first}..{want_last} (stale/shifted formula)")
+    log.info("Workbook validation passed (%s)", os.path.basename(path))
+
+
 def _find_over_col(ws) -> int | None:
     """Find the column index (1-based) of the OVER header in row 2."""
     for col in range(1, ws.max_column + 1):
@@ -895,19 +1007,25 @@ def update_trq_sheet(ws, data: dict, today: date):
         log.info("Sheet '%s' already has column '%s' — skipping", ws.title, date_header)
         return
 
-    # Find OVER column
+    # Find OVER column. Missing means the sheet layout was altered (e.g. the
+    # workbook was hand-edited): FAIL LOUD — a warn-and-return here would let
+    # every subsequent weekly run silently skip this sheet while the pipeline
+    # stays green and keeps publishing.
     over_col = _find_over_col(ws)
     if over_col is None:
-        log.warning("No OVER column found in '%s' — cannot update", ws.title)
-        return
+        raise RuntimeError(
+            f"no OVER header found in sheet '{ws.title}' — layout changed; "
+            f"refusing to silently skip this sheet's weekly update")
 
     # New date column replaces OVER position; OVER moves right by 1
     new_date_col = over_col
     new_over_col = over_col + 1
 
-    # Write date header
+    # Write date header. This cell previously held the OVER header, so clear
+    # its yellow fill explicitly — per the template only OVER is highlighted.
     header_cell = ws.cell(row=2, column=new_date_col, value=date_header)
     header_cell.font = BOLD_FONT
+    header_cell.fill = PatternFill()
 
     # Clear the entire new date column first (old OVER "YES" values may linger)
     for row in range(3, ws.max_row + 1):
@@ -1153,6 +1271,36 @@ def create_hts_sheet(wb: Workbook):
 # Main
 # ---------------------------------------------------------------------------
 
+def _load_or_init_workbook() -> Workbook:
+    """Load the existing workbook, failing LOUD if it is missing or corrupt.
+
+    A missing file must never be silently rebuilt: a fresh workbook would
+    contain only the current quarter with one date column — all prior weekly
+    columns, quarter sheets, and B1 archives gone — and the pipeline would
+    commit and publish it green. Restore the file instead (git checkout --
+    data/, or download the 'latest' Release), or set TRQ_ALLOW_NEW_WORKBOOK=1
+    for a deliberate first-time initialization."""
+    if os.path.exists(OUTPUT_FILE):
+        log.info("Loading existing workbook: %s", OUTPUT_FILE)
+        try:
+            return load_workbook(OUTPUT_FILE)
+        except Exception as exc:
+            log.error("Could not open existing workbook %s: %s", OUTPUT_FILE, exc)
+            sys.exit(1)
+    if os.environ.get("TRQ_ALLOW_NEW_WORKBOOK") != "1":
+        log.error(
+            "Workbook %s is MISSING. Refusing to rebuild from scratch — that would "
+            "silently lose all accumulated history and publish a history-less file. "
+            "Restore it (git checkout -- data/, or the 'latest' Release), or set "
+            "TRQ_ALLOW_NEW_WORKBOOK=1 to initialize deliberately.", OUTPUT_FILE)
+        sys.exit(1)
+    log.info("Creating new workbook (TRQ_ALLOW_NEW_WORKBOOK=1)")
+    wb = Workbook()
+    if "Sheet" in wb.sheetnames:
+        del wb["Sheet"]
+    return wb
+
+
 def main():
     today = date.today()
 
@@ -1201,22 +1349,9 @@ def main():
         log.info("B1 data for matching calendar quarter not yet available (TRQ %s, current month %d)",
                  quarter, today.month)
 
-    # Load or create workbook
+    # Load the workbook (fails loud if missing/corrupt — see helper)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-    if os.path.exists(OUTPUT_FILE):
-        log.info("Loading existing workbook: %s", OUTPUT_FILE)
-        try:
-            wb = load_workbook(OUTPUT_FILE)
-        except Exception as exc:
-            log.error("Could not open existing workbook %s: %s", OUTPUT_FILE, exc)
-            sys.exit(1)
-    else:
-        log.info("Creating new workbook")
-        wb = Workbook()
-        # Remove default sheet
-        if "Sheet" in wb.sheetnames:
-            del wb["Sheet"]
+    wb = _load_or_init_workbook()
 
     # On a quarter transition, preserve the previous quarter's B1 imports. The
     # single "B1 Imports" sheet is deleted & rewritten every run, so without this
@@ -1231,17 +1366,23 @@ def main():
         wb["B1 Imports"].title = archive
         log.info("Quarter transition: archived previous B1 data as '%s'", archive)
 
-    # Update or create TRQ sheets
-    for trq_type, data in [("NFTA", nfta_data), ("FTA", fta_data)]:
-        sheet_name = f"{TRQ_SHEET_PREFIX[trq_type]} {quarter}"
-        rep = reports[trq_type]
-        if sheet_name in wb.sheetnames:
-            log.info("Updating existing sheet '%s'...", sheet_name)
-            update_trq_sheet(wb[sheet_name], data, today)
-        else:
-            log.info("Creating new sheet '%s'...", sheet_name)
-            create_trq_sheet(wb, sheet_name, quarter, trq_type, data, today,
-                             start_date=rep["start_str"], end_date=rep["end_str"])
+    # Update or create TRQ sheets. FAIL LOUD on writer-level problems (e.g. a
+    # hand-edited sheet missing its OVER header) instead of publishing a
+    # silently-stale sheet on a green run.
+    try:
+        for trq_type, data in [("NFTA", nfta_data), ("FTA", fta_data)]:
+            sheet_name = f"{TRQ_SHEET_PREFIX[trq_type]} {quarter}"
+            rep = reports[trq_type]
+            if sheet_name in wb.sheetnames:
+                log.info("Updating existing sheet '%s'...", sheet_name)
+                update_trq_sheet(wb[sheet_name], data, today)
+            else:
+                log.info("Creating new sheet '%s'...", sheet_name)
+                create_trq_sheet(wb, sheet_name, quarter, trq_type, data, today,
+                                 start_date=rep["start_str"], end_date=rep["end_str"])
+    except RuntimeError as exc:
+        log.error("TRQ sheet update failed: %s", exc)
+        sys.exit(1)
 
     # B1 sheet
     create_b1_sheet(wb, b1_data, quarter, today, quarter_end=reports["FTA"]["end_date"])
@@ -1249,13 +1390,28 @@ def main():
     # HTS reference sheet
     create_hts_sheet(wb)
 
-    # Save atomically: write to a temp file, then swap it in. A crash mid-save
-    # must never truncate the accumulated history file. On local Windows runs
+    # Save atomically: write to a temp file, VALIDATE it, then swap it in. A
+    # crash mid-save must never truncate the accumulated history file, and a
+    # workbook that fails the saved-file invariants must never replace the
+    # good file (nor reach the pipeline's commit step). On local Windows runs
     # the destination can be transiently locked (Excel has it open, or the
     # OneDrive sync engine holds a handle) — retry briefly, and on final
-    # failure keep the .tmp (it holds the new data; *.tmp is gitignored).
-    tmp_file = OUTPUT_FILE + ".tmp"
-    wb.save(tmp_file)
+    # failure keep the .tmp.xlsx (it holds the new data; *.tmp.xlsx is
+    # gitignored). NOTE: the temp name must keep a real .xlsx extension —
+    # openpyxl refuses to open *.tmp files, which would break the gate below.
+    tmp_file = OUTPUT_FILE[:-len(".xlsx")] + ".tmp.xlsx"
+    try:
+        wb.save(tmp_file)
+    except PermissionError as exc:
+        log.error("Could not write %s (open in Excel from a previous inspection?): "
+                  "%s — close it and re-run", tmp_file, exc)
+        sys.exit(1)
+    try:
+        validate_workbook(tmp_file)
+    except Exception as exc:
+        log.error("Saved workbook FAILED validation: %s — %s left untouched; "
+                  "bad file kept at %s for inspection", exc, OUTPUT_FILE, tmp_file)
+        sys.exit(1)
     for attempt in range(3):
         try:
             os.replace(tmp_file, OUTPUT_FILE)

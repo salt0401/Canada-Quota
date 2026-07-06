@@ -37,17 +37,23 @@ def _rows_for(name):
     return quota, share, rows, total_kgm, util_pct
 
 
-def build_new_format() -> str:
+def build_new_format(rename_products=False, mismatch_products=frozenset()) -> str:
+    """rename_products: Part A product labels change (simulates a source-side
+    rename — no tracked product should be found).
+    mismatch_products: these products' Part B totals disagree with Part A."""
     lines = ["Textbox137,Textbox143,Textbox155", "meta,meta,meta", "",
              "Textboxb6db,Textbox0874,Textbox38"]
     hdr6 = ("Product class,Maximum quota (KGM),Maximum country share (%),"
             "Current utilization (KGM),Current utilization (%),Remaining quota (KGM)")
     for item, name in PRODUCTS:
         quota, share, rows, total_kgm, util_pct = _rows_for(name)
-        lines.append(f'{hdr6},{item},{name},"{quota:,}",{share},"{total_kgm:,}",{util_pct},"0"')
+        label = f"Renamed {name}" if rename_products else name
+        lines.append(f'{hdr6},{item},{label},"{quota:,}",{share},"{total_kgm:,}",{util_pct},"0"')
     lines.append("")
     for item, name in PRODUCTS:
         _, _, rows, total_kgm, _ = _rows_for(name)
+        if name in mismatch_products:
+            total_kgm += 5000
         lines.append(f"Textboxb6db{item},Textbox6defe{item},Textbox81837{item}")
         for country, kgm, pct in rows:
             c = f'"{country}"' if "," in country else country
@@ -131,6 +137,23 @@ def test_empty_and_unknown_csv():
         t.parse_trq_csv("")
     with pytest.raises(ValueError, match="Unrecognized"):
         t.parse_trq_csv("hello,world\n1,2")
+
+
+def test_all_tracked_products_missing_fails_loud():
+    """A wholesale label rename must abort, not publish an all-blank week."""
+    with pytest.raises(ValueError, match="NONE of the tracked products"):
+        t.parse_trq_csv(build_new_format(rename_products=True))
+
+
+def test_widespread_kgm_mismatch_fails_loud():
+    """>= _PART_AB_MISMATCH_LIMIT Part A/B total disagreements = positional
+    desync -> abort; a couple of mismatches stay warn-only (deliberate)."""
+    many = {"Hot-Rolled Sheet", "Steel Plate", "Other A", "Other B", "Other C"}
+    with pytest.raises(ValueError, match="desynchronized"):
+        t.parse_trq_csv(build_new_format(mismatch_products=many))
+    # one mismatch: warn-only, parse succeeds
+    result = t.parse_trq_csv(build_new_format(mismatch_products={"Steel Plate"}))
+    assert "Steel Plate" in result
 
 
 def test_real_fixture_matches_golden():
