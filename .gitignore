@@ -17,3 +17,7 @@ download_latest.zip
 # requires git filter-repo + force push (owner's call).
 email_to_laura.txt
 letter received.txt
+
+# Local session log for resuming the Claude Code review conversation. Private
+# working notes, not part of the shipped project.
+SESSION-LOG-pareto-review.md
