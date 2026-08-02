@@ -1,22 +1,33 @@
 # Line endings: NO CONVERSION, ANYWHERE.
 #
 # Added 2026-08-02 with the move of the weekly run from a Linux GitHub runner to
-# the Windows company server. Measured before writing this: every blob in this
-# repository is already stored with CRLF (checked with `git show HEAD:<file>`).
+# the Windows company server.
 #
-# That is fine as long as nothing renormalises. The hazard the move introduces is
-# that Git for Windows defaults to core.autocrlf=true, which converts CRLF->LF on
-# `git add`. On the server that would make every text file read as MODIFIED the
-# moment anything touched its mtime -- and the weekly task refuses to publish
-# when the working tree is dirty outside data/. The job would stop, weekly, for a
-# reason that has nothing to do with the data.
+# What is actually in this repository, measured with `git show HEAD:<file>`:
+# the blobs are MIXED. canada_trq_tracker.py, README.md, download_latest.bat and
+# the test fixtures are stored CRLF; docs/known-issues.md, enduser/guide.html and
+# the workflow YAML are stored LF. Nothing enforced either, so it drifted with
+# whatever tool last wrote each file.
 #
-# `* -text` pins the bytes: the blob is checked out verbatim and staged verbatim,
-# on every OS, regardless of anyone's core.autocrlf. It also means adding this
-# file produces ZERO diff against the existing blobs, which matters when it lands
-# the day before a cutover. (The server clone additionally sets
-# core.autocrlf=false -- belt and braces, since config does not survive a
-# re-clone by someone who forgets.)
+# That mix is exactly why this matters. Git for Windows defaults to
+# core.autocrlf=true, which converts CRLF->LF on `git add`. On the server that
+# would silently renormalise every CRLF-stored file the moment anything touched
+# its mtime, turning them all into whole-file diffs and leaving the working tree
+# permanently "modified" — and the weekly task refuses to publish when the tree
+# is dirty outside data/. The job would stop, every week, for a reason that has
+# nothing to do with the data.
+#
+# `* -text` pins the bytes: each blob is checked out verbatim and staged
+# verbatim, on every OS, regardless of anyone's core.autocrlf. Because it
+# preserves whatever each file already had rather than imposing one style, it
+# produces ZERO diff — which matters when it lands the day before a cutover.
+# (The server clone additionally sets core.autocrlf=false — belt and braces,
+# since config does not survive a re-clone by someone who forgets.)
+#
+# Consequence for editors: whatever you use must preserve a file's existing
+# endings. A tool that rewrites LF as CRLF turns a two-line change into a
+# whole-file diff. Check with `git diff --stat` before committing; a paragraph
+# edit that reports hundreds of changed lines is this, not your edit.
 * -text
 
 # The workbook is the accumulated history and a zip container. `binary` adds

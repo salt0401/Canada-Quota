@@ -349,13 +349,22 @@ Use `git bundle`, not a working-tree copy: git performs the checkout so the
 server's own rules apply, only tracked content travels, and no GitHub credential
 is needed to obtain the code.
 
-**`core.autocrlf false` is not optional.** Every blob in this repository is
-stored with CRLF. Git for Windows defaults `core.autocrlf` to `true`, which
-renormalises to LF on `git add` — which would make every text file read as
-modified the moment anything touched its mtime, and the weekly task refuses to
-publish from a dirty tree. The repository also ships `* -text` in
-`.gitattributes`; this setting is the belt to that braces, because config does
-not survive a re-clone by someone who forgets.
+**`core.autocrlf false` is not optional.** This repository's blobs have **mixed**
+line endings — `canada_trq_tracker.py`, `README.md` and the test fixtures are
+stored CRLF, while `docs/known-issues.md`, `enduser/guide.html` and the workflow
+YAML are stored LF. Nothing ever enforced a convention. Git for Windows defaults
+`core.autocrlf` to `true`, which converts CRLF→LF on `git add`, so the
+CRLF-stored files would silently renormalise the moment anything touched their
+mtime — leaving the working tree permanently "modified", and the weekly task
+refuses to publish from a dirty tree. The repository also ships `* -text` in
+`.gitattributes`, which pins each blob's bytes as they are; this setting is the
+belt to that braces, because config does not survive a re-clone by someone who
+forgets.
+
+> Same trap on the authoring side: use an editor that preserves a file's
+> existing endings. A tool that rewrites LF as CRLF turns a paragraph edit into
+> a several-hundred-line diff. `git diff --stat` catches it — an edit that
+> reports far more changed lines than you wrote is this.
 
 **Install nothing.** Python 3.12.10 (`C:\Python312`) and Git 2.55 were already on
 this box from the earlier deployments, and this project pins 3.12. The
