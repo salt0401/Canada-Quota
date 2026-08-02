@@ -222,8 +222,26 @@ up by Acronis to storage MEPS does not control. A credential placed here should
 be assumed to be *reachable*. Scoped as above, the worst case is someone writing
 to one repository whose entire contents are already public.
 
-**Set an expiry and diary the renewal.** An expired token surfaces as a push
-failure, which the watchdog catches within a day.
+**This token has NO expiry** (owner's decision, 2026-08-02). That is a deliberate
+trade, not an oversight, and the consequence is worth stating so the next person
+is not surprised by it.
+
+*What it avoids:* a renewal date nobody diarised, silently expiring and taking
+the weekly publish down.
+
+*What it costs:* the credential is only as long-lived as the GitHub account that
+issued it. **When that account is closed or loses access to the repository, this
+job stops publishing** — the run will fail at `git push` with a 401, the
+watchdog will open an issue, and whoever inherits this will be looking at a
+credential problem with no expiry date to explain it. That is the scenario this
+paragraph exists for: re-issue a fine-grained PAT on an account that still has
+`Contents: Read and write` on `salt0401/Canada-Quota` and re-run
+`tools\set-github-token.ps1`.
+
+*The other thing an expiry buys, which is now absent:* a periodic prompt that
+someone still owns this job. Without one, nothing forces a human to look at it
+again. The freshness watchdog is the compensating control — it is the only
+mechanism that will notice.
 
 ### Two encoding traps
 
