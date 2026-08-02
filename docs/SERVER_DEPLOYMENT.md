@@ -4,13 +4,19 @@ Since August 2026 the weekly Canada TRQ scrape runs on the **MEPS company
 server**, not on GitHub Actions. This document is the operational reference for
 that: what is installed where, how a run works, and what to do when one fails.
 
-> **Status — 2026-08-02: DEPLOYED AND VERIFIED, NOT YET CUT OVER.**
-> The code, interpreter and dependencies are on the server, the test suite passes
-> there (**51 passed**, matching the laptop baseline) and a full inert end-to-end
-> run succeeded in 16 s. **Nothing is scheduled and nothing can push**: no
-> scheduled task references this project, `server-weekly-task.ps1` requires
-> `-Push`, and the token file does not exist yet. **GitHub Actions remains the
-> live pipeline** until cutover. Update this banner when that changes.
+> **Status — 2026-08-02: ✅ LIVE. This server is the pipeline.**
+> Cut over 2026-08-02. The scheduled task is registered and enabled, the push
+> credential is in place, and the GitHub Actions `schedule:` is disabled
+> (`workflow_dispatch` retained as the fallback). Asserted with
+> `tools\assert-inert.ps1 -PostCutover`.
+>
+> **The first live publish was run by hand and observed**, rather than letting an
+> untested publish path fire unattended: commit `e96cabe`, pushed, and the
+> `latest` release asset re-uploaded at 14:37:38Z. Verified from the outside by
+> downloading exactly what `download_latest.bat` fetches and confirming it
+> carries the new column. That is why the workbook has an off-cadence
+> `August 2 2026` (Sunday) column between `July 27` and `August 3` — real data,
+> deliberately published, one-off.
 
 For anything about the server *itself* — access, firewalls, other workloads,
 constraints — read the separate **`meps-server-docs`** repository. This file
@@ -389,6 +395,10 @@ reproducible.
 | **PATH** | Verified unchanged after deployment: `python` and `py` still resolve to 3.13.1 |
 | **Disk** | 161.8 GB free before; the deployment is ~60 MB including the venv |
 | **First inert end-to-end run** | 16 s. Both TRQ sheets updated, B1 table parsed (6.0 MB / 18,354 rows → 8 tracked products, 69 rows), `Workbook validation passed`, output discarded afterwards |
+| **Credential verified** | `git push --dry-run` and `publish_release.py --dry-run` both authenticated and changed nothing. Token: 93 bytes, no BOM, no trailing newline, not readable by `Users` |
+| **Cutover** | 2026-08-02. GitHub `schedule:` disabled and confirmed absent from `master` on GitHub; task registered; `assert-inert.ps1 -PostCutover` → all guards asserted |
+| **First LIVE run** | 21 s. Commit `e96cabe`, **pushed on the first attempt** (no spurious rejection — the `Invoke-Native` fix), release asset re-uploaded 14:37:38Z |
+| **Delivery verified from outside** | Downloaded `releases/latest/download/canada_trq_tracker.xlsx` — 34,952 bytes, newest column `2026-08-02`. Q4 sheets still 15 columns each, so no history was disturbed |
 
 ### Windows portability, verified rather than assumed
 
