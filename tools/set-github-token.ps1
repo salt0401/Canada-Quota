@@ -10,6 +10,29 @@
 #   ssh -i ~/.ssh/meps_vps_ed25519 Administrator@212.227.127.169
 #   powershell -ExecutionPolicy Bypass -File C:\DataScienceProject\CanadaQuota\tools\set-github-token.ps1
 #
+# !! LOG IN FIRST, THEN RUN IT. Do NOT pass the script as a remote command:
+#
+#   ssh ... "powershell -File ...\set-github-token.ps1"     <-- HANGS
+#
+# `ssh host "command"` allocates no pseudo-terminal, and Read-Host
+# -AsSecureString needs a real console to read hidden keystrokes. The prompt
+# prints, then the process blocks forever with nowhere to read from. Observed
+# 2026-08-02: three attempts left five stuck powershell.exe processes and wrote
+# nothing. `ssh -t` forces a PTY and usually works, but an interactive login is
+# the reliable route.
+#
+# -FromStdin is the fallback for when no console is available at all. It reads
+# the token from standard input instead of prompting, so it works as a remote
+# command or with input redirected from a file:
+#
+#   ssh ... "powershell -ExecutionPolicy Bypass -File ...\set-github-token.ps1 -FromStdin"
+#   <paste the token, press Enter, then Ctrl-D>
+#
+# The trade-off is that the token is ECHOED in your local terminal, so it lands
+# in that terminal's scrollback. It still never reaches a command line or the
+# process list, which is the property that matters on a shared machine. Clear
+# your scrollback afterwards if that matters to you.
+#
 # The token must be a FINE-GRAINED personal access token, scoped to
 # salt0401/Canada-Quota only, with Repository permissions ->
 # "Contents: Read and write". Nothing else. This host is internet-facing, is
@@ -33,7 +56,8 @@
 # lines -- see meps-server-docs/docs/10-scripting-gotchas.md section 4.
 
 param(
-    [string]$TokenFile = "C:\DataScienceProject\_secrets\canadaquota-github.token"
+    [string]$TokenFile = "C:\DataScienceProject\_secrets\canadaquota-github.token",
+    [switch]$FromStdin
 )
 
 $ErrorActionPreference = "Stop"
@@ -44,17 +68,32 @@ if (-not (Test-Path $dir)) {
     "Created $dir"
 }
 
-""
-"Paste the fine-grained GitHub token (scoped to salt0401/Canada-Quota,"
-"Repository permissions -> Contents: Read and write), then press Enter."
-"Input is hidden."
-""
-$secure = Read-Host -AsSecureString "Token"
-$bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
-try {
-    $token = [System.Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr).Trim()
-} finally {
-    [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+if ($FromStdin) {
+    "Reading the token from standard input (it will be echoed by your terminal)."
+    "Paste it, press Enter, then Ctrl-D (Ctrl-Z then Enter from a Windows console)."
+    ""
+    $token = [Console]::In.ReadToEnd()
+    if ($null -ne $token) { $token = $token.Trim() }
+} else {
+    # Fail fast with a useful message rather than blocking forever. Read-Host
+    # -AsSecureString needs a real console; run as a remote ssh command there is
+    # none, and the process hangs with the prompt already printed, which looks
+    # like the paste did not register.
+    if ([Console]::IsInputRedirected) {
+        throw "No interactive console: standard input is redirected. You are probably running this as a remote ssh command (ssh host `"powershell -File ...`"), which allocates no pseudo-terminal. Log in first and run it at the remote prompt, or re-run with -FromStdin. See this script's header."
+    }
+    ""
+    "Paste the fine-grained GitHub token (scoped to salt0401/Canada-Quota,"
+    "Repository permissions -> Contents: Read and write), then press Enter."
+    "Input is hidden."
+    ""
+    $secure = Read-Host -AsSecureString "Token"
+    $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+    try {
+        $token = [System.Runtime.InteropServices.Marshal]::PtrToStringBSTR($bstr).Trim()
+    } finally {
+        [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($bstr)
+    }
 }
 
 if (-not $token) { throw "No token entered." }
