@@ -135,11 +135,24 @@ if ($utcDate -ne $localDate) {
     Write-Log "Local and UTC dates disagree. Harmless for an inert run -- the column will be headed $localDate and should be discarded afterwards -- but this run could NOT have published." "WARN"
 }
 
-# Working-tree state. A dirty workbook is the expected residue of a run that
-# died between writing the file and committing it; the data in it was never
-# validated by the publish path and the source only serves current values, so
-# discarding it costs nothing that is not already lost. Anything ELSE dirty
+# Working-tree state. A dirty workbook has exactly two causes, and discarding
+# it is right for both:
+#
+#   * the scratch output of an earlier INERT run, which the script itself tells
+#     you to throw away, or
+#   * a run that died between writing the file and committing it. That data was
+#     never published and the source only serves CURRENT values, so the week is
+#     already lost either way -- regenerating from the live source is strictly
+#     better than committing an unvalidated leftover.
+#
+# A run that got as far as committing leaves a CLEAN tree, so this never
+# discards anything that was published or is about to be. Anything ELSE dirty
 # means someone hand-edited the server clone, which must not be published.
+#
+# Consequence worth knowing before it surprises you: because this runs first, a
+# manual re-run after an inert run REBUILDS the column rather than taking
+# update_trq_sheet's same-day skip path. The skip only shows up when the tree is
+# clean, i.e. after a successful -Push run. Both produce the same data.
 $dirty = @(& git status --porcelain | Where-Object { $_.Trim() -ne "" })
 if ($dirty.Count -gt 0) {
     $others = @($dirty | Where-Object { $_ -notmatch [regex]::Escape($DataFile) })
@@ -148,7 +161,7 @@ if ($dirty.Count -gt 0) {
         foreach ($d in $others) { Write-Log ("    " + $d) "ERROR" }
         Fail "The server clone has changes outside $DataFile. Someone edited this working copy. Inspect and resolve by hand; refusing to run."
     }
-    Write-Log "Discarding leftover uncommitted changes to $DataFile (residue of an earlier failed run; it will be regenerated from the live source)." "WARN"
+    Write-Log "Discarding leftover uncommitted changes to $DataFile (scratch output of an earlier inert run, or residue of a run that died before committing; it will be regenerated from the live source)." "WARN"
     Invoke-Native "git" @("checkout", "--", $DataFile) "git checkout data file"
 }
 

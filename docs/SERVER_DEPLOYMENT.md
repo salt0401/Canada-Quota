@@ -125,17 +125,27 @@ is really for **manual** runs.
 > (`Get-Date -UFormat %s` is not a UTC epoch in PowerShell 5.1 — it derives from
 > local time and reads an hour high under BST.)
 
-**3. The working-tree guard.** A dirty `data/canada_trq_tracker.xlsx` is the
-expected residue of a run that died between writing the file and committing it;
-it is discarded and regenerated. Anything else dirty means somebody edited the
-server clone by hand, and the run refuses rather than publishing it.
+**3. The working-tree guard.** A dirty `data/canada_trq_tracker.xlsx` is either
+the scratch output of an inert run or the residue of a run that died before
+committing; either way it is discarded and regenerated from the live source. A
+run that reached the commit leaves a **clean** tree, so this can never throw away
+something that was published or is about to be. Anything else dirty means
+somebody edited the server clone by hand, and the run refuses rather than
+publishing it.
+
+> Worth knowing before it surprises you: because this guard runs *first*, a
+> manual re-run straight after an inert run **rebuilds** the column instead of
+> taking `update_trq_sheet`'s same-day skip path — the tree was dirty, so the
+> workbook got reset before the scrape. The skip only appears when the tree is
+> clean, i.e. after a successful `-Push` run. Both paths produce the same data;
+> only the log differs. (Observed during bring-up, 2026-08-02.)
 
 **4. The freshness assertion.** "The script exited 0" and "the workbook
 advanced" are different claims — the whole of `known-issues.md` is about that
 gap. `check_freshness.py --expect-date` reads the newest dated column back out
-of the saved file. It holds on a fresh run *and* on a same-day re-run (the
-script is idempotent and skips an existing column), and fails if the update path
-silently did nothing.
+of the saved file, and fails if the update path silently did nothing. It holds
+on a fresh run and on a same-day re-run alike, because the script skips a date
+column it already has.
 
 **5. No blind conflict resolution.** The task pushes first and only pulls if the
 push is rejected. If the rebase then conflicts, it **aborts and fails** rather
