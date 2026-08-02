@@ -22,15 +22,24 @@ Two layers, kept separate on purpose:
 
 ### Delivery chain (why a local fix isn't enough)
 
+**Changed 2026-08-02 — the weekly run moved to the MEPS company server.**
+
 ```
-Monday cron → GitHub Actions runs the script (cloud, from the repo)
-           → commits data/canada_trq_tracker.xlsx AND publishes it to the "latest" Release
-           → colleague's download_latest.bat pulls from releases/latest/download/
+Monday 13:00 local → Task Scheduler on WIN-RE1UH50A07U
+                     runs tools\server-weekly-task.ps1 -Push
+                  → commits data/canada_trq_tracker.xlsx to the repo
+                  → uploads it to the "latest" Release
+                  → colleague's download_latest.bat pulls from releases/latest/download/
 ```
 
-A fix reaches the end user only after it is **committed and pushed** and a run
-completes (scheduled Monday, or manual `workflow_dispatch`). Push fixes **before
-the next Monday run**, or the old code publishes another file first.
+A fix reaches the end user only after it is **committed, pushed, AND pulled onto
+the server**, and a run completes. That last step is new and is the easy one to
+forget: GitHub Actions checked out `master` on every run, so pushing deployed
+itself; the server runs whatever was last pulled onto it. See
+[SERVER_DEPLOYMENT.md](SERVER_DEPLOYMENT.md) → "Updating the code on the server".
+
+Do it **before the next Monday run**, or the old code publishes another file
+first.
 
 ---
 
@@ -164,6 +173,43 @@ it. This survives transient drops/slow responses and fails a blocked connect fas
 > capped at two automatic retries via `run_attempt`. Manual fallback: "Re-run
 > jobs" in the Actions UI, or `gh run rerun <id> --failed`.
 
+### 2026-08-02 update — this bug shaped, and now constrains, the server move
+
+The weekly run moved to the MEPS company server, whose address is **also a
+datacenter IP** (IONOS, `212.227.127.169`). Whether this bug applied to it was
+therefore the gating question for the whole migration, not a detail — so it was
+measured before any code was written. With the production User-Agent, against
+the URLs the script actually fetches:
+
+| Target | Result from the company server, 2026-08-02 |
+|---|---|
+| `international.gc.ca` TRQ landing page | **200** |
+| `eics-scei.gc.ca/report-rapport/TRQ_FTA-Y2Q1.csv` | **200** |
+| `eics-scei.gc.ca/report-rapport/TRQ_NFTA-Y2Q1.csv` | **200** |
+| `eics-scei.gc.ca/report-rapport/b1.htm` | **200** |
+
+Confirmed beyond the status code by a full end-to-end run that parsed real data
+from all four.
+
+**But the move removes the cure.** GitHub rotated runner IPs, so a blocked draw
+self-healed on re-run — that is the entire premise of `retry_on_failure.yml`.
+The server has **one fixed address and no equivalent**. In-run retries still
+cannot beat a hard block, and now there is no fresh IP to fall back to
+automatically.
+
+The fallback is therefore manual and deliberate: **GitHub → Actions → "Weekly
+Canada TRQ Update" → Run workflow**, which is why that workflow is kept with its
+schedule commented out rather than deleted. It draws a GitHub runner IP, and
+`retry_on_failure.yml` still auto-retries it on a fresh runner if it fails.
+
+⚠️ Only dispatch it once the server task is confirmed not to have run that week —
+otherwise the two race on `git push`.
+
+**A pass on 2026-08-02 is not a guarantee.** The block is reputation-based and
+IP-specific; the symptom to watch for is the same as ever, a *connect timeout*
+rather than an HTTP status. Re-test with
+`meps-server-docs/scripts/validate-targets.ps1`.
+
 **Prevention:**
 - Don't "fix" this by only adding a User-Agent or more in-run retries — the block
   is at the network layer, below HTTP, and pinned to the run's IP.
@@ -261,15 +307,34 @@ commit step can publish anything:
   real one; a failing file is kept for inspection and the run exits 1, so the
   auto-retry fires and the failure emails.
 
-### Environment note — local clone lives inside OneDrive
+### Environment note — file locks during the atomic save
 
-The working copy (including `.git`) sits in a OneDrive-synced folder. OneDrive
-can transiently lock or sync-shuffle files under `.git/`, which is a known
-source of repo weirdness, and it also locks the xlsx during sync (the save path
-retries and preserves a `.tmp.xlsx` on failure). CI is unaffected. If repo
-corruption is ever observed locally, prefer a clone outside OneDrive (e.g.
-`C:\dev\Canada-Quota`) for development and treat the OneDrive copy as
-data-only.
+**Updated 2026-08-02. The original form of this note is now stale in one respect
+and newly relevant in another.**
+
+*Then:* the working copy sat in a OneDrive-synced folder, and OneDrive could
+transiently lock or sync-shuffle files under `.git/` and lock the xlsx mid-sync.
+The note recommended moving development outside OneDrive.
+
+*Now:* **that move happened.** The development clone lives at
+`C:\dev\project\02 Monitored\Canada Quota` — verified 2026-08-02 to be outside
+the OneDrive root (`C:\Users\<user>\OneDrive - MEPS`). OneDrive is no longer in
+the picture for the repository.
+
+The **retry logic in the save path is still load-bearing**, though, for a
+different reason. The weekly run now happens on the MEPS company server, where
+Windows Defender real-time scanning *and* Acronis Active Protection both watch
+file writes with **no exclusions** (a standing owner ruling). The predicted
+symptom is identical to the old OneDrive one: an intermittent `PermissionError`
+/ `WinError 32` on `os.replace`, on a file this code just wrote, which succeeds
+on an immediate re-run. That is why `main()` retries the swap three times, two
+seconds apart, and preserves the new data in `data/canada_trq_tracker.tmp.xlsx`
+(gitignored) rather than losing it.
+
+**Do not remove that retry as dead code.** Locally it now guards against Excel
+having the workbook open; on the server it guards against the antivirus pair.
+See [SERVER_DEPLOYMENT.md](SERVER_DEPLOYMENT.md) → "The antivirus failure
+signature".
 
 ---
 
