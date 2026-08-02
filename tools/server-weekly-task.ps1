@@ -60,18 +60,26 @@ function Fail {
 # write ordinary progress to stderr, and PowerShell 5.1 with
 # ErrorActionPreference=Stop treats that as fatal even on exit code 0 --
 # meps-server-docs/docs/10-scripting-gotchas.md section 1.
+#
+# The exit code is published in $script:NativeExit rather than RETURNED, and
+# that is not a style choice. Write-Log emits with Write-Output, so anything
+# this function logs joins its own pipeline: `$code = Invoke-Native ...` would
+# bind an ARRAY of every logged line plus the code, and `if ($code -ne 0)` on an
+# array is a filter, not a comparison -- a non-empty result is truthy, so a
+# SUCCESSFUL git push would test as failed. Piping to Out-Null instead is no
+# better: it silently discards the log lines from the console, which is the
+# view a human is watching during a manual run.
 function Invoke-Native {
     param([string]$Exe, [string[]]$Arguments, [string]$What, [switch]$AllowFailure)
     $prev = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
     $output = & $Exe @Arguments 2>&1
-    $code = $LASTEXITCODE
+    $script:NativeExit = $LASTEXITCODE
     $ErrorActionPreference = $prev
     foreach ($line in $output) { Write-Log ("    " + $line) }
-    if ($code -ne 0 -and -not $AllowFailure) {
-        Fail ("{0} failed with exit code {1}" -f $What, $code)
+    if ($script:NativeExit -ne 0 -and -not $AllowFailure) {
+        Fail ("{0} failed with exit code {1}" -f $What, $script:NativeExit)
     }
-    return $code
 }
 
 Write-Log "=== Canada TRQ weekly update starting ==="
@@ -141,14 +149,14 @@ if ($dirty.Count -gt 0) {
         Fail "The server clone has changes outside $DataFile. Someone edited this working copy. Inspect and resolve by hand; refusing to run."
     }
     Write-Log "Discarding leftover uncommitted changes to $DataFile (residue of an earlier failed run; it will be regenerated from the live source)." "WARN"
-    Invoke-Native "git" @("checkout", "--", $DataFile) "git checkout data file" | Out-Null
+    Invoke-Native "git" @("checkout", "--", $DataFile) "git checkout data file"
 }
 
 # ---------------------------------------------------------------- scrape ---
 
 Write-Log "Running canada_trq_tracker.py ..."
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
-Invoke-Native $venvPython @("canada_trq_tracker.py") "canada_trq_tracker.py" | Out-Null
+Invoke-Native $venvPython @("canada_trq_tracker.py") "canada_trq_tracker.py"
 $sw.Stop()
 Write-Log ("Scrape and workbook update completed in {0:N0}s" -f $sw.Elapsed.TotalSeconds)
 
@@ -158,7 +166,7 @@ Write-Log ("Scrape and workbook update completed in {0:N0}s" -f $sw.Elapsed.Tota
 # both on a fresh run and on a same-day re-run, and fails if the update path
 # silently did nothing.
 Write-Log "Asserting the workbook now carries a column for $localDate ..."
-Invoke-Native $venvPython @("tools\check_freshness.py", "--expect-date", $localDate) "workbook freshness check" | Out-Null
+Invoke-Native $venvPython @("tools\check_freshness.py", "--expect-date", $localDate) "workbook freshness check"
 
 if (-not $Push) {
     Write-Log "INERT run complete. Nothing was committed, pushed or uploaded."
@@ -170,8 +178,8 @@ if (-not $Push) {
 # ------------------------------------------------------- publish upstream ---
 
 # Identity is set per-repository so nothing global on this shared box changes.
-Invoke-Native "git" @("config", "user.name", "meps-server-canadaquota") "git config user.name" | Out-Null
-Invoke-Native "git" @("config", "user.email", "canadaquota@meps.local") "git config user.email" | Out-Null
+Invoke-Native "git" @("config", "user.name", "meps-server-canadaquota") "git config user.name"
+Invoke-Native "git" @("config", "user.email", "canadaquota@meps.local") "git config user.email"
 
 # Credentials reach git through GIT_ASKPASS reading the token file, so the
 # token never appears on a command line (visible in the process list on a
@@ -197,13 +205,13 @@ $GitNoHelper = @("-c", "credential.helper=")
 # replaces used the directory form, which was safe on a throwaway runner but is
 # not here: anything that ever lands in data\ on a long-lived machine would be
 # published to a public repository.
-Invoke-Native "git" @("add", "--", $DataFile) "git add" | Out-Null
+Invoke-Native "git" @("add", "--", $DataFile) "git add"
 
-$unchanged = Invoke-Native "git" @("diff", "--cached", "--quiet") "git diff --cached" -AllowFailure
-if ($unchanged -eq 0) {
+Invoke-Native "git" @("diff", "--cached", "--quiet") "git diff --cached" -AllowFailure
+if ($script:NativeExit -eq 0) {
     Write-Log "Workbook is byte-identical to the last commit; nothing to commit." "WARN"
 } else {
-    Invoke-Native "git" @("commit", "-m", "Weekly TRQ update $utcDate") "git commit" | Out-Null
+    Invoke-Native "git" @("commit", "-m", "Weekly TRQ update $utcDate") "git commit"
 
     # Push first, WITHOUT pulling. After cutover this server is the only writer,
     # so a rejection is information: most likely both pipelines are live (the
@@ -214,15 +222,15 @@ if ($unchanged -eq 0) {
     # It is the ONLY path by which this clone updates itself; the task never
     # pulls at the start of a run, deliberately. See docs/SERVER_DEPLOYMENT.md
     # ("Updating the code on the server") for why, and for the deploy command.
-    $pushed = Invoke-Native "git" ($GitNoHelper + @("push", "origin", $Branch)) "git push" -AllowFailure
-    if ($pushed -ne 0) {
+    Invoke-Native "git" ($GitNoHelper + @("push", "origin", $Branch)) "git push" -AllowFailure
+    if ($script:NativeExit -ne 0) {
         Write-Log "Push rejected -- the remote has moved. Pulling once and retrying. If this recurs weekly, check that the GitHub Actions schedule is really disabled: two pipelines publishing the same week is the cutover trap." "WARN"
-        $rebased = Invoke-Native "git" ($GitNoHelper + @("pull", "--rebase", "origin", $Branch)) "git pull --rebase" -AllowFailure
-        if ($rebased -ne 0) {
-            Invoke-Native "git" @("rebase", "--abort") "git rebase --abort" -AllowFailure | Out-Null
+        Invoke-Native "git" ($GitNoHelper + @("pull", "--rebase", "origin", $Branch)) "git pull --rebase" -AllowFailure
+        if ($script:NativeExit -ne 0) {
+            Invoke-Native "git" @("rebase", "--abort") "git rebase --abort" -AllowFailure
             Fail "Rebase onto origin/$Branch conflicted. The workbook is binary, so this is NOT auto-resolved: picking a side blindly would silently discard a week of history. Resolve by hand over SSH."
         }
-        Invoke-Native "git" ($GitNoHelper + @("push", "origin", $Branch)) "git push (retry)" | Out-Null
+        Invoke-Native "git" ($GitNoHelper + @("push", "origin", $Branch)) "git push (retry)"
     }
     Write-Log "Pushed: Weekly TRQ update $utcDate"
 }
@@ -232,7 +240,7 @@ if ($unchanged -eq 0) {
 # workflow step it replaces did. A commit that never reaches the release is
 # invisible to the colleague; the release is the delivery surface.
 Write-Log "Uploading the workbook to the 'latest' release..."
-Invoke-Native $venvPython @("tools\publish_release.py", "--token-file", $TokenFile) "release asset upload" | Out-Null
+Invoke-Native $venvPython @("tools\publish_release.py", "--token-file", $TokenFile) "release asset upload"
 
 Remove-Item Env:\CANADAQUOTA_TOKEN_FILE, Env:\GIT_ASKPASS -ErrorAction SilentlyContinue
 
