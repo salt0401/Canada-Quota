@@ -290,6 +290,31 @@ UTC (in case the run was merely late) and alerts on Tuesday. It opens an issue
 titled **"Weekly TRQ update has not published"**, comments while the problem
 persists, and closes it on recovery.
 
+### Verified 2026-08-02 — and one thing still unproven
+
+Dispatched by hand (run #1, `workflow_dispatch`): **success in 17 s**. The check
+step passed, the "open or update the alert issue" step was **skipped** — the
+correct decision on fresh data — and no issue was created. The check logic was
+separately exercised in both directions off-GitHub: `--max-age-days 7` exits 0
+on fresh data, and a forced-stale run exits 1 and emits the `detail` string the
+issue body interpolates.
+
+**What is NOT yet proven is the `schedule:` trigger itself.** The workflow landed
+on `master` at 01:51 UTC and its first 15:00 UTC slot produced no run at all
+(`total_count: 0` fifty minutes later), while GitHub Actions reported
+operational and the same repo's `Tests` workflow was running normally on push.
+GitHub's cron delivery is explicitly best-effort and skipped slots are a known
+behaviour, so this is not necessarily broken — but it is not verified either.
+
+**Check the next 15:00 UTC slot.** If the schedule proves unreliable, note that
+the obvious workaround is wrong: triggering the watchdog `on: push` would only
+fire when the pipeline *works*, which is precisely backwards for a heartbeat.
+The alternative would be an off-GitHub check.
+
+This matters more than it looks, because the push token was deliberately issued
+with **no expiry**: this watchdog is now the only mechanism that will ever raise
+a hand about this job, for any reason.
+
 ---
 
 ## Triage
