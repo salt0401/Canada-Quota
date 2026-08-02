@@ -1,0 +1,122 @@
+name: Data freshness watchdog
+
+# Since the weekly scrape moved to the MEPS company server (2026-08), nothing on
+# that machine notices a scheduled task that never fires. Windows Task Scheduler
+# has no alerting, and a job that does not start cannot report that it did not
+# start -- see meps-server-docs/docs/06-constraints-and-risks.md section 6.
+#
+# This replaces a capability the move REMOVED rather than adding a new one:
+# while the scrape ran here, GitHub emailed the repository owner whenever the
+# scheduled workflow failed. Nothing on the server does that.
+#
+# It deliberately runs on GitHub, NOT on the server, because a watchdog hosted
+# on the machine it watches is not a watchdog. Free on a public repository.
+#
+# It checks one fact: how old is the newest dated column in the committed
+# workbook? That single assertion covers every way the pipeline can fail -- the
+# task not firing, discovery failing, the source blocking this server's IP, the
+# fail-loud parse guards aborting, the push failing -- because all of them end
+# with the workbook not advancing.
+#
+# TIMING. The server task runs Monday 13:00 local = 12:00 UTC in summer,
+# 13:00 UTC in winter. 15:00 UTC leaves a two-hour margin. Age of the newest
+# column on a healthy pipeline, measured at 15:00 UTC: 0 on Monday, rising to 6
+# on Sunday. A missed Monday therefore reads 7 at Monday 15:00 (tolerated, in
+# case the run was merely late) and 8 on Tuesday, which alerts.
+
+on:
+  schedule:
+    - cron: '0 15 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: data-freshness-watchdog
+  cancel-in-progress: false
+
+jobs:
+  check-freshness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # tools/check_freshness.py deliberately depends on openpyxl alone, so this
+      # does not need the scraper's requests/bs4/lxml stack to read two cells.
+      - run: pip install openpyxl==3.1.5
+
+      - name: Check how old the newest weekly column is
+        id: check
+        run: |
+          set +e
+          OUT=$(python tools/check_freshness.py --max-age-days 7 --json)
+          RC=$?
+          set -e
+          echo "$OUT"
+          NEWEST=$(echo "$OUT" | python -c "import json,sys; print(json.load(sys.stdin)['newest_column'])")
+          AGE=$(echo "$OUT" | python -c "import json,sys; print(json.load(sys.stdin)['age_days'])")
+          echo "newest=$NEWEST" >> "$GITHUB_OUTPUT"
+          if [ "$RC" -eq 0 ]; then
+            echo "stale=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "stale=true" >> "$GITHUB_OUTPUT"
+            echo "detail=the newest column in data/canada_trq_tracker.xlsx is $NEWEST, $AGE day(s) old" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Open or update the alert issue
+        if: steps.check.outputs.stale == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TITLE="Weekly TRQ update has not published"
+
+          # Heredoc, not a quoted string: YAML dedents this block, so the body
+          # reaches markdown with no leading indentation. Four leading spaces
+          # would silently render the whole issue as a code block.
+          cat > /tmp/watchdog-body.md <<'EOF'
+          The freshness watchdog found: __DETAIL__
+
+          The weekly scrape runs on the MEPS company server (`WIN-RE1UH50A07U`), scheduled task **MEPS Canada TRQ Weekly Update**, Mondays at 13:00 local. Nothing on that host alerts, which is why this check exists.
+
+          **Triage, in order:**
+
+          1. Check the task result:
+             `ssh -i ~/.ssh/meps_vps_ed25519 Administrator@212.227.127.169 "Get-ScheduledTaskInfo -TaskName 'MEPS Canada TRQ Weekly Update'"`
+             `LastTaskResult` of `0` means the script ran and succeeded.
+          2. Read the run log on the server:
+             `C:\DataScienceProject\CanadaQuota\logs\server_<YYYYMMDD>.log`
+          3. `docs/SERVER_DEPLOYMENT.md` covers server-specific failures (task, credential, upload, IP block).
+             `docs/known-issues.md` covers pipeline failures (parse-shape change, program-year rollover, workbook validation).
+
+          **Laura is not blocked yet.** `download_latest.bat` keeps serving the last successful week from the `latest` release. A one-week gap is not urgent; a widening one is.
+
+          **Emergency fallback:** the old GitHub Actions job still exists with its schedule disabled. Actions -> *Weekly Canada TRQ Update* -> **Run workflow** publishes from a GitHub runner instead. This is also the escape hatch if the source host has started refusing the server's fixed IP, because a runner draws a different egress IP. Only do this once the server task is confirmed not running, or the two race on push.
+          EOF
+          sed -i "s|__DETAIL__|${{ steps.check.outputs.detail }}|" /tmp/watchdog-body.md
+
+          EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "Still stale on $(date -u +%F): ${{ steps.check.outputs.detail }}."
+          else
+            gh issue create --title "$TITLE" --body-file /tmp/watchdog-body.md
+          fi
+
+      - name: Close the alert issue once data is fresh again
+        if: steps.check.outputs.stale == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          EXISTING=$(gh issue list --state open --search "Weekly TRQ update has not published in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$EXISTING" ]; then
+            gh issue comment "$EXISTING" --body "Recovered: newest column is now ${{ steps.check.outputs.newest }}. Closing."
+            gh issue close "$EXISTING"
+          fi
+          echo "Workbook is current (newest column ${{ steps.check.outputs.newest }})."

@@ -91,7 +91,7 @@ python canada_trq_tracker.py
   table; the page currently serves year-to-date, so the scraper filters to the
   quarter-aligned months in `TRQ_TO_B1_CALENDAR_MONTHS`).
 
-Full design notes: [docs/superpowers/specs/2026-03-30-canada-trq-tracker-design.md](docs/superpowers/specs/2026-03-30-canada-trq-tracker-design.md).
+Full design notes: [docs/design-2026-03-30.md](docs/design-2026-03-30.md).
 
 ## Delivery to the end user
 
@@ -133,8 +133,8 @@ source, not just the script's output:
 | `.github/workflows/tests.yml` | Runs the offline test suite on every push/PR. |
 | `tests/` | pytest suite: parser (incl. real captured fixtures), writer invariants, discovery. |
 | `data/canada_trq_tracker.xlsx` | Output (committed; also published to Release). |
-| `Canadian Quota Template.xlsx` | Laura's reference template (format target only — the script never reads it). |
-| `guide.html` | End-user usage guide. |
-| `download_latest.bat` | End-user one-click downloader (pulls the Release). |
+| `enduser/guide.html` | End-user usage guide. |
+| `enduser/download_latest.bat` | End-user one-click downloader (pulls the Release). |
 | `docs/known-issues.md` | Bug history & prevention — read before editing. |
-| `docs/superpowers/specs/…design.md` | Original design spec (quarter-URL section superseded; see marker inside). |
+| `docs/design-2026-03-30.md` | Original design spec (quarter-URL section superseded; see marker inside). |
+| `docs/reference/Canadian Quota Template.xlsx` | Laura's reference template (format target only — the script never reads it). |

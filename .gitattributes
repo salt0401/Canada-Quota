@@ -1,0 +1,26 @@
+# Line endings: NO CONVERSION, ANYWHERE.
+#
+# Added 2026-08-02 with the move of the weekly run from a Linux GitHub runner to
+# the Windows company server. Measured before writing this: every blob in this
+# repository is already stored with CRLF (checked with `git show HEAD:<file>`).
+#
+# That is fine as long as nothing renormalises. The hazard the move introduces is
+# that Git for Windows defaults to core.autocrlf=true, which converts CRLF->LF on
+# `git add`. On the server that would make every text file read as MODIFIED the
+# moment anything touched its mtime -- and the weekly task refuses to publish
+# when the working tree is dirty outside data/. The job would stop, weekly, for a
+# reason that has nothing to do with the data.
+#
+# `* -text` pins the bytes: the blob is checked out verbatim and staged verbatim,
+# on every OS, regardless of anyone's core.autocrlf. It also means adding this
+# file produces ZERO diff against the existing blobs, which matters when it lands
+# the day before a cutover. (The server clone additionally sets
+# core.autocrlf=false -- belt and braces, since config does not survive a
+# re-clone by someone who forgets.)
+* -text
+
+# The workbook is the accumulated history and a zip container. `binary` adds
+# -diff on top of -text, so nothing ever attempts a textual diff or merge of it.
+# The weekly task deliberately fails rather than auto-resolving a conflict here:
+# picking a side blindly would silently discard a week of history.
+*.xlsx binary

@@ -1,5 +1,13 @@
 name: Retry failed TRQ update
 
+# STILL USEFUL AFTER THE 2026-08-02 MOVE TO THE COMPANY SERVER, in a narrower
+# role. "Weekly Canada TRQ Update" no longer runs on a schedule, so this now
+# fires only when someone DISPATCHES that workflow by hand as the emergency
+# fallback. That is exactly the case it was built for: a manual fallback run is
+# most likely happening *because* the source is refusing an IP, and re-running
+# on a fresh runner is the only cure. It does not, and cannot, retry the
+# server's scheduled task.
+#
 # When "Weekly Canada TRQ Update" fails, the usual cause is the source host
 # (www.eics-scei.gc.ca) silently dropping this runner's egress IP — a transient,
 # IP-specific block (see docs/known-issues.md). Re-running provisions a NEW runner

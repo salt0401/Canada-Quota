@@ -3,13 +3,20 @@ __pycache__/
 *.pyo
 .pytest_cache/
 
+# Server deployment: the venv and the weekly run logs live inside the working
+# copy on C:\DataScienceProject\CanadaQuota. Neither may ever be committed --
+# this repository is PUBLIC and the weekly task pushes to it unattended.
+venv/
+logs/
+
 # Transient atomic-save file (data/canada_trq_tracker.tmp.xlsx — keeps a real
 # .xlsx extension because openpyxl refuses *.tmp for the validation gate);
 # must never be committed by the CI's `git add data/` if a crash leaves one.
 *.tmp
 *.tmp.xlsx
 
-# Distribution bundle — derived from download_latest.bat + guide.html, regenerated as needed
+# Distribution bundle — derived from enduser/download_latest.bat + enduser/guide.html,
+# regenerated as needed
 download_latest.zip
 
 # Personal correspondence — kept locally, not in the (public) repo.
