@@ -13,6 +13,12 @@ GitHub Release.
 > Since 2026-08 the weekly run happens on the MEPS company server, not on GitHub
 > Actions — which means **pushing a fix no longer reaches the pipeline by
 > itself**.
+>
+> **Picking this up in a new session?** Start with
+> [docs/SESSION_HANDOVER.md](docs/SESSION_HANDOVER.md) — current state, open
+> items, and the traps that each cost someone a debugging cycle. There is
+> deliberately only ever **one** of those files; overwrite it, don't accumulate
+> dated copies.
 
 ---
 
@@ -186,6 +192,7 @@ source, not just the script's output:
 | `data/canada_trq_tracker.xlsx` | Output (committed; also published to Release). |
 | `enduser/guide.html` | End-user usage guide. |
 | `enduser/download_latest.bat` | End-user one-click downloader (pulls the Release). |
+| `docs/SESSION_HANDOVER.md` | **Start here in a new session.** Current state, open items, environment traps. One file, overwritten — never accumulated. |
 | `docs/known-issues.md` | Bug history & prevention — read before editing. |
 | `docs/design-2026-03-30.md` | Original design spec (quarter-URL section superseded; see marker inside). |
 | `docs/reference/Canadian Quota Template.xlsx` | Laura's reference template (format target only — the script never reads it). |
