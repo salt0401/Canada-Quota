@@ -238,12 +238,38 @@ if ($script:NativeExit -eq 0) {
     Invoke-Native "git" ($GitNoHelper + @("push", "origin", $Branch)) "git push" -AllowFailure
     if ($script:NativeExit -ne 0) {
         Write-Log "Push rejected -- the remote has moved. Pulling once and retrying. If this recurs weekly, check that the GitHub Actions schedule is really disabled: two pipelines publishing the same week is the cutover trap." "WARN"
+        # Read HEAD directly rather than through Invoke-Native, which publishes
+        # an exit code but not output (see its header for why capturing from it
+        # would bind the log lines too).
+        $preHead = (& git -C $ProjectRoot rev-parse HEAD 2>$null | Select-Object -First 1)
+
         Invoke-Native "git" ($GitNoHelper + @("pull", "--rebase", "origin", $Branch)) "git pull --rebase" -AllowFailure
         if ($script:NativeExit -ne 0) {
             Invoke-Native "git" @("rebase", "--abort") "git rebase --abort" -AllowFailure
             Fail "Rebase onto origin/$Branch conflicted. The workbook is binary, so this is NOT auto-resolved: picking a side blindly would silently discard a week of history. Resolve by hand over SSH."
         }
         Invoke-Native "git" ($GitNoHelper + @("push", "origin", $Branch)) "git push (retry)"
+
+        # That pull is the ONLY path by which this clone updates its own code
+        # (see the note above), and this task runs as SYSTEM at RunLevel
+        # Highest. Continuing straight into tools\publish_release.py would
+        # execute code that arrived seconds ago, unreviewed, at full machine
+        # privilege -- which turns one compromised push to the remote, or one
+        # leaked token, into SYSTEM on a server that also runs SQL Server and
+        # IIS. A data-only pull (the workbook, docs, history) is harmless and
+        # carries on as before; a pull that touched executable files stops the
+        # run here instead, so the new code runs only after a human has read it.
+        #
+        # Nothing is lost by stopping: the workbook is committed and pushed by
+        # this point. Only the release-asset upload is deferred to the next run.
+        $postHead = (& git -C $ProjectRoot rev-parse HEAD 2>$null | Select-Object -First 1)
+        if ($preHead -and $postHead -and $preHead -ne $postHead) {
+            $codeChanged = @(& git -C $ProjectRoot diff --name-only $preHead $postHead -- "*.py" "*.ps1" "*.cmd" "*.bat" "*.sh" 2>$null)
+            if ($codeChanged.Count) {
+                Write-Log ("The recovery pull changed executable files: " + ($codeChanged -join ", ")) "ERROR"
+                Fail "Refusing to execute freshly pulled code in the same run as the pull that fetched it. Review the files listed above, then re-run the task by hand once you trust them."
+            }
+        }
     }
     Write-Log "Pushed: Weekly TRQ update $utcDate"
 }
