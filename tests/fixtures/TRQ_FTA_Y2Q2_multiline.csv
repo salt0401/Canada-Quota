@@ -1,0 +1,238 @@
+Textbox137,Textbox143,Textbox155,Textbox156,Textbox146,Textbox147,Textbox148,Textbox149,Textbox150,Textbox151,Textbox152,Textbox153,Textbox154,Textbox157,Textbox158,Textbox159,Textbox160,Textbox161,Textbox162,Textbox163,Textbox164,Textbox165,Textbox166,Textbox167
+Free Trade Agreement Partners: Total Quarterly Volumes and Utilization per TRQ,"1. Carbon steel ingots: Quarterly utilization per country 
+The maximum share for any single country is 77% of the maximum quota of 92,400 KGM.","2. Steel billets and blooms: Quarterly utilization per country
+The maximum share for any single country is 40% of the maximum quota of 17,649,400 KGM.","3. Hot-rolled sheet: Quarterly utilization per country 
+The maximum share for any single country is 71% of the maximum quota of 8,569,800 KGM.","4. Floor plate: Quarterly utilization per country 
+The maximum share for any single country is 66% of the maximum quota of 33,400 KGM.","5. Steel plate: Quarterly utilization per country 
+The maximum share for any single country is 33% of the maximum quota of 38,517,700 KGM.","6. Cold-rolled sheet: Quarterly utilization per country 
+The maximum share for any single country is 35% of the maximum quota of 2,785,800 KGM.","7. Tin: Quarterly utilization per country 
+The maximum share for any single country is 56% of the maximum quota of 2,156,400 KGM.","8. Coated steel sheet: Quarterly utilization per country 
+The maximum share for any single country is 25% of the maximum quota of 31,128,200 KGM.","9. Pre-painted: Quarterly utilization per country
+The maximum share for any single country is 90% of the maximum quota of 23,763,800 KGM.","10. Rebar: Quarterly utilization per country 
+The maximum share for any single country is 45% of the maximum quota of 28,710,400 KGM.","11. Hot-rolled bar: Quarterly utilization per country 
+The maximum share for any single country is 58% of the maximum quota of 8,750,300 KGM.","12. Wire rod: Quarterly utilization per country 
+The maximum share for any single country is 59% of the maximum quota of 16,514,800 KGM.","13. Cold finished bars: Quarterly utilization per country
+The maximum share for any single country is 39% of the maximum quota of 6,559,300 KGM.","14. Structural steel: Quarterly utilization per country 
+The maximum share for any single country is 69% of the maximum quota of 3,467,600 KGM.","15. Steel wire: Quarterly utilization per country
+The maximum share for any single country is 24% of the maximum quota of 7,370,100 KGM.","16. Stainless steel ingots: Quarterly utilization per country 
+The maximum share for any single country is 83% of the maximum quota of 1,100 KGM.","17. Stainless steel billets and blooms: Quarterly utilization per country
+The maximum share for any single country is 57% of the maximum quota of 5,800 KGM.","18. Line pipe: Quarterly utilization per country
+The maximum share for any single country is 45% of the maximum quota of 6,248,600 KGM.","19. Oil country tubular goods: Quarterly utilization per country
+The maximum share for any single country is 86% of the maximum quota of 9,800,800 KGM.","20. Standard pipe: Quarterly utilization per country 
+The maximum share for any single country is 58% of the maximum quota of 13,489,500 KGM.","21. Large diameter line pipe: Quarterly utilization per country 
+The maximum share for any single country is 76% of the maximum quota of 10,693,500 KGM.","22. Piling pipe: Quarterly utilization per country 
+The maximum share for any single country is 77% of the maximum quota of 800 KGM.","23. Hollow structural sections: Quarterly utilization per country
+The maximum share for any single country is 41% of the maximum quota of 2,776,900 KGM."
+
+Textboxb6db942229da46bd872d39356f1404bb,Textbox0874cee6ce8b4c488f07adddedeb99e0,Textbox38,Textbox6defe02f6a5b4da79422566035a32381,Textbox8183768284fd4c8a9fecbd60b0f055be,Textboxecf89731bdd942ec8daa85d7b51cbfd4,Textbox18,CONTROL_ITEMS_Level_1_Commodity_Code,CONTROL_ITEMS_Level_1_Ceiling_Level,ID23_Products_Quota_Country_Ceiling___,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,CONTROL_ITEMS_Quota_Remaining
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),1,Carbon Steel Ingots,"92,400",77%,0,0.00%,"92,400"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),2,Steel Billets and Blooms,"17,649,400",40%,"24,181",0.14%,"17,625,219"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),3,Hot-Rolled Sheet,"8,569,800",71%,"8,569,800",100.00%,0
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),4,Floor Plate,"33,400",66%,0,0.00%,"33,400"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),5,Steel Plate,"38,517,700",33%,"38,398,413",99.69%,"119,287"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),6,Cold-Rolled Sheet,"2,785,800",35%,"420,992",15.11%,"2,364,808"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),7,Tin,"2,156,400",56%,"1,730,185",80.23%,"426,215"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),8,Coated Steel Sheet,"31,128,200",25%,"16,419,586",52.75%,"14,708,614"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),9,Pre-Painted,"23,763,800",90%,"22,881,995",96.29%,"881,805"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),10,Rebar,"28,710,400",45%,"21,412,341",74.58%,"7,298,059"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),11,Hot-Rolled Bar,"8,750,300",58%,"8,536,363",97.56%,"213,937"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),12,Wire Rod,"16,514,800",59%,"8,587,430",52.00%,"7,927,370"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),13,Cold Finished Bars,"6,559,300",39%,"930,205",14.18%,"5,629,095"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),14,Structural Steel,"3,467,600",69%,"3,456,128",99.67%,"11,472"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),15,Steel Wire,"7,370,100",24%,Max Utilized,Max Utilized,0
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),16,Stainless Steel Ingots,"1,100",83%,0,0.00%,"1,100"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),17,Stainless Steel Billets and Blooms,"5,800",57%,"3,100",53.45%,"2,700"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),18,Line Pipe,"6,248,600",45%,"2,831,936",45.32%,"3,416,664"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),19,Oil Country Tubular Goods,"9,800,800",86%,"9,736,371",99.34%,"64,429"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),20,Standard Pipe,"13,489,500",58%,"4,161,109",30.85%,"9,328,391"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),21,Large Diameter Line Pipe,"10,693,500",76%,"633,593",5.93%,"10,059,907"
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),22,Piling Pipe,800,77%,0,0.00%,800
+Product class,Maximum quota (KGM),Maximum country share (%),Current utilization (KGM),Current utilization (%),Remaining quota (KGM),23,Hollow Structural Sections,"2,776,900",41%,"1,950,201",70.23%,"826,699"
+
+Textboxb6db942229da46bd872d39356f1404bb2,Textbox6defe02f6a5b4da79422566035a32382,Textbox8183768284fd4c8a9fecbd60b0f055be2,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_21,Textbox7,Textbox24
+
+Textboxb6db942229da46bd872d39356f1404bb3,Textbox6defe02f6a5b4da79422566035a32383,Textbox8183768284fd4c8a9fecbd60b0f055be3,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_11,Textbox125,Textbox87
+Country,Current utilization (KGM),Share of total utilization (%),United Kingdom,"24,181",0.14%,"24,181",0.14%
+
+Textboxb6db942229da46bd872d39356f1404bb4,Textbox6defe02f6a5b4da79422566035a32384,Textbox8183768284fd4c8a9fecbd60b0f055be4,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,Textbox8,Textbox89
+Country,Current utilization (KGM),Share of total utilization (%),Japan,"3,425,950",39.98%,"8,569,800",100.00%
+Country,Current utilization (KGM),Share of total utilization (%),"Korea, Republic of","4,917,360",57.38%,"8,569,800",100.00%
+Country,Current utilization (KGM),Share of total utilization (%),Poland,"8,462",0.10%,"8,569,800",100.00%
+Country,Current utilization (KGM),Share of total utilization (%),Spain,"92,068",1.07%,"8,569,800",100.00%
+Country,Current utilization (KGM),Share of total utilization (%),Vietnam,"125,960",1.47%,"8,569,800",100.00%
+
+Textboxb6db942229da46bd872d39356f1404bb5,Textbox6defe02f6a5b4da79422566035a32385,Textbox8183768284fd4c8a9fecbd60b0f055be5,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_1,Textbox103,Textbox106
+
+Textboxb6db942229da46bd872d39356f1404bb6,Textbox6defe02f6a5b4da79422566035a32386,Textbox8183768284fd4c8a9fecbd60b0f055be6,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_4,Textbox130,Textbox131
+Country,Current utilization (KGM),Share of total utilization (%),Australia,"5,623,096",14.60%,"38,398,413",99.69%
+Country,Current utilization (KGM),Share of total utilization (%),Austria,"1,837,462",4.77%,"38,398,413",99.69%
+Country,Current utilization (KGM),Share of total utilization (%),Belgium,"11,926",0.03%,"38,398,413",99.69%
+Country,Current utilization (KGM),Share of total utilization (%),Finland,"438,277",1.14%,"38,398,413",99.69%
+Country,Current utilization (KGM),Share of total utilization (%),France,"4,183,960",10.86%,"38,398,413",99.69%
+Country,Current utilization (KGM),Share of total utilization (%),Germany,"7,393,068",19.19%,"38,398,413",99.69%
+Country,Current utilization (KGM),Share of total utilization (%),Japan,"5,253,358",13.64%,"38,398,413",99.69%
+Country,Current utilization (KGM),Share of total utilization (%),"Korea, Republic of","12,710,841",33.00%,"38,398,413",99.69%
+Country,Current utilization (KGM),Share of total utilization (%),Netherlands,"42,655",0.11%,"38,398,413",99.69%
+Country,Current utilization (KGM),Share of total utilization (%),Poland,"8,792",0.02%,"38,398,413",99.69%
+Country,Current utilization (KGM),Share of total utilization (%),Slovenia,"85,364",0.22%,"38,398,413",99.69%
+Country,Current utilization (KGM),Share of total utilization (%),Spain,"21,865",0.06%,"38,398,413",99.69%
+Country,Current utilization (KGM),Share of total utilization (%),Sweden,"787,749",2.05%,"38,398,413",99.69%
+
+Textboxb6db942229da46bd872d39356f1404bb7,Textbox6defe02f6a5b4da79422566035a32387,Textbox8183768284fd4c8a9fecbd60b0f055be7,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_2,Textbox9,Textbox91
+Country,Current utilization (KGM),Share of total utilization (%),Finland,"25,056",0.90%,"420,992",15.11%
+Country,Current utilization (KGM),Share of total utilization (%),Germany,"64,961",2.33%,"420,992",15.11%
+Country,Current utilization (KGM),Share of total utilization (%),Slovakia,"1,255",0.05%,"420,992",15.11%
+Country,Current utilization (KGM),Share of total utilization (%),Sweden,"329,720",11.84%,"420,992",15.11%
+
+Textboxb6db942229da46bd872d39356f1404bb8,Textbox6defe02f6a5b4da79422566035a32388,Textbox8183768284fd4c8a9fecbd60b0f055be8,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,Textbox10,Textbox31
+Country,Current utilization (KGM),Share of total utilization (%),Colombia,"1,022,561",47.42%,"1,730,185",80.23%
+Country,Current utilization (KGM),Share of total utilization (%),France,"91,712",4.25%,"1,730,185",80.23%
+Country,Current utilization (KGM),Share of total utilization (%),Italy,"361,990",16.79%,"1,730,185",80.23%
+Country,Current utilization (KGM),Share of total utilization (%),Japan,"112,672",5.23%,"1,730,185",80.23%
+Country,Current utilization (KGM),Share of total utilization (%),"Korea, Republic of","92,794",4.30%,"1,730,185",80.23%
+Country,Current utilization (KGM),Share of total utilization (%),Netherlands,"48,456",2.25%,"1,730,185",80.23%
+
+Textboxb6db942229da46bd872d39356f1404bb9,Textbox6defe02f6a5b4da79422566035a32389,Textbox8183768284fd4c8a9fecbd60b0f055be9,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,Textbox11,Textbox61
+Country,Current utilization (KGM),Share of total utilization (%),Australia,"9,586",0.03%,"16,419,586",52.75%
+Country,Current utilization (KGM),Share of total utilization (%),Austria,"584,948",1.88%,"16,419,586",52.75%
+Country,Current utilization (KGM),Share of total utilization (%),Belgium,"3,652,229",11.73%,"16,419,586",52.75%
+Country,Current utilization (KGM),Share of total utilization (%),Finland,"758,971",2.44%,"16,419,586",52.75%
+Country,Current utilization (KGM),Share of total utilization (%),Germany,"7,782,050",25.00%,"16,419,586",52.75%
+Country,Current utilization (KGM),Share of total utilization (%),Japan,"224,915",0.72%,"16,419,586",52.75%
+Country,Current utilization (KGM),Share of total utilization (%),"Korea, Republic of","1,702,100",5.47%,"16,419,586",52.75%
+Country,Current utilization (KGM),Share of total utilization (%),Netherlands,"1,595,326",5.13%,"16,419,586",52.75%
+Country,Current utilization (KGM),Share of total utilization (%),Sweden,"109,461",0.35%,"16,419,586",52.75%
+
+Textboxb6db942229da46bd872d39356f1404bb10,Textbox6defe02f6a5b4da79422566035a32390,Textbox8183768284fd4c8a9fecbd60b0f055be10,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_10,Textbox13,Textbox65
+Country,Current utilization (KGM),Share of total utilization (%),Colombia,"123,146",0.52%,"22,881,995",96.29%
+Country,Current utilization (KGM),Share of total utilization (%),Germany,"1,847,710",7.78%,"22,881,995",96.29%
+Country,Current utilization (KGM),Share of total utilization (%),"Korea, Republic of","18,428,531",77.55%,"22,881,995",96.29%
+Country,Current utilization (KGM),Share of total utilization (%),Netherlands,"49,041",0.21%,"22,881,995",96.29%
+Country,Current utilization (KGM),Share of total utilization (%),Sweden,"42,993",0.18%,"22,881,995",96.29%
+Country,Current utilization (KGM),Share of total utilization (%),Vietnam,"2,390,574",10.06%,"22,881,995",96.29%
+
+Textboxb6db942229da46bd872d39356f1404bb11,Textbox6defe02f6a5b4da79422566035a32391,Textbox8183768284fd4c8a9fecbd60b0f055be11,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_3,Textbox15,Textbox94
+Country,Current utilization (KGM),Share of total utilization (%),Australia,"22,000",0.08%,"21,412,341",74.58%
+Country,Current utilization (KGM),Share of total utilization (%),Germany,"8,483,755",29.55%,"21,412,341",74.58%
+Country,Current utilization (KGM),Share of total utilization (%),Vietnam,"12,906,586",44.95%,"21,412,341",74.58%
+
+Textboxb6db942229da46bd872d39356f1404bb12,Textbox6defe02f6a5b4da79422566035a32392,Textbox8183768284fd4c8a9fecbd60b0f055be12,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_9,Textbox46,Textbox92
+Country,Current utilization (KGM),Share of total utilization (%),Australia,"43,527",0.50%,"8,536,363",97.56%
+Country,Current utilization (KGM),Share of total utilization (%),Austria,37,0.00%,"8,536,363",97.56%
+Country,Current utilization (KGM),Share of total utilization (%),Czech Republic,412,0.00%,"8,536,363",97.56%
+Country,Current utilization (KGM),Share of total utilization (%),Denmark,"18,228",0.21%,"8,536,363",97.56%
+Country,Current utilization (KGM),Share of total utilization (%),France,"50,659",0.58%,"8,536,363",97.56%
+Country,Current utilization (KGM),Share of total utilization (%),Germany,"5,075,174",58.00%,"8,536,363",97.56%
+Country,Current utilization (KGM),Share of total utilization (%),Italy,"3,959",0.05%,"8,536,363",97.56%
+Country,Current utilization (KGM),Share of total utilization (%),Japan,"1,209,631",13.82%,"8,536,363",97.56%
+Country,Current utilization (KGM),Share of total utilization (%),"Korea, Republic of","322,921",3.69%,"8,536,363",97.56%
+Country,Current utilization (KGM),Share of total utilization (%),Luxembourg,"1,262,986",14.43%,"8,536,363",97.56%
+Country,Current utilization (KGM),Share of total utilization (%),Romania,"61,847",0.71%,"8,536,363",97.56%
+Country,Current utilization (KGM),Share of total utilization (%),Slovenia,700,0.01%,"8,536,363",97.56%
+Country,Current utilization (KGM),Share of total utilization (%),Spain,"478,269",5.47%,"8,536,363",97.56%
+Country,Current utilization (KGM),Share of total utilization (%),United Kingdom,"7,804",0.09%,"8,536,363",97.56%
+Country,Current utilization (KGM),Share of total utilization (%),Vietnam,209,0.00%,"8,536,363",97.56%
+
+Textboxb6db942229da46bd872d39356f1404bb13,Textbox6defe02f6a5b4da79422566035a32393,Textbox8183768284fd4c8a9fecbd60b0f055be13,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_5,Textbox64,Textbox98
+Country,Current utilization (KGM),Share of total utilization (%),Belgium,"67,918",0.41%,"8,587,430",52.00%
+Country,Current utilization (KGM),Share of total utilization (%),Germany,"1,714,144",10.38%,"8,587,430",52.00%
+Country,Current utilization (KGM),Share of total utilization (%),Japan,"269,397",1.63%,"8,587,430",52.00%
+Country,Current utilization (KGM),Share of total utilization (%),"Korea, Republic of","317,935",1.93%,"8,587,430",52.00%
+Country,Current utilization (KGM),Share of total utilization (%),Malaysia,"6,145,820",37.21%,"8,587,430",52.00%
+Country,Current utilization (KGM),Share of total utilization (%),Netherlands,"72,216",0.44%,"8,587,430",52.00%
+
+Textboxb6db942229da46bd872d39356f1404bb14,Textbox6defe02f6a5b4da79422566035a32394,Textbox8183768284fd4c8a9fecbd60b0f055be14,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,Textbox66,Textbox101
+Country,Current utilization (KGM),Share of total utilization (%),Austria,"1,314",0.02%,"930,205",14.18%
+Country,Current utilization (KGM),Share of total utilization (%),France,"81,048",1.24%,"930,205",14.18%
+Country,Current utilization (KGM),Share of total utilization (%),Germany,"305,046",4.65%,"930,205",14.18%
+Country,Current utilization (KGM),Share of total utilization (%),Italy,"2,988",0.05%,"930,205",14.18%
+Country,Current utilization (KGM),Share of total utilization (%),Japan,"4,968",0.08%,"930,205",14.18%
+Country,Current utilization (KGM),Share of total utilization (%),Netherlands,406,0.01%,"930,205",14.18%
+Country,Current utilization (KGM),Share of total utilization (%),Poland,"48,078",0.73%,"930,205",14.18%
+Country,Current utilization (KGM),Share of total utilization (%),Romania,"4,941",0.08%,"930,205",14.18%
+Country,Current utilization (KGM),Share of total utilization (%),Slovenia,28,0.00%,"930,205",14.18%
+Country,Current utilization (KGM),Share of total utilization (%),Spain,"350,947",5.35%,"930,205",14.18%
+Country,Current utilization (KGM),Share of total utilization (%),Sweden,"86,565",1.32%,"930,205",14.18%
+Country,Current utilization (KGM),Share of total utilization (%),Switzerland,"1,506",0.02%,"930,205",14.18%
+Country,Current utilization (KGM),Share of total utilization (%),United Kingdom,"42,370",0.65%,"930,205",14.18%
+
+Textboxb6db942229da46bd872d39356f1404bb15,Textbox6defe02f6a5b4da79422566035a32395,Textbox8183768284fd4c8a9fecbd60b0f055be15,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_13,Textbox67,Textbox107
+Country,Current utilization (KGM),Share of total utilization (%),Germany,"635,499",18.33%,"3,456,128",99.67%
+Country,Current utilization (KGM),Share of total utilization (%),Italy,"17,325",0.50%,"3,456,128",99.67%
+Country,Current utilization (KGM),Share of total utilization (%),Japan,"52,750",1.52%,"3,456,128",99.67%
+Country,Current utilization (KGM),Share of total utilization (%),"Korea, Republic of","2,093,827",60.38%,"3,456,128",99.67%
+Country,Current utilization (KGM),Share of total utilization (%),Luxembourg,"156,128",4.50%,"3,456,128",99.67%
+Country,Current utilization (KGM),Share of total utilization (%),Poland,919,0.03%,"3,456,128",99.67%
+Country,Current utilization (KGM),Share of total utilization (%),Vietnam,"499,680",14.41%,"3,456,128",99.67%
+
+Textboxb6db942229da46bd872d39356f1404bb32,Textbox6defe02f6a5b4da79422566035a32412,Textbox8183768284fd4c8a9fecbd60b0f055be32,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,Textbox69,Textbox110
+Country,Current utilization (KGM),Share of total utilization (%),Austria,"42,779",0.58%,Max Utilized,Max Utilized
+Country,Current utilization (KGM),Share of total utilization (%),Bulgaria,"309,508",4.20%,Max Utilized,Max Utilized
+Country,Current utilization (KGM),Share of total utilization (%),Czech Republic,"22,163",0.30%,Max Utilized,Max Utilized
+Country,Current utilization (KGM),Share of total utilization (%),Germany,"128,759",1.75%,Max Utilized,Max Utilized
+Country,Current utilization (KGM),Share of total utilization (%),Greece,"630,150",8.55%,Max Utilized,Max Utilized
+Country,Current utilization (KGM),Share of total utilization (%),Italy,"358,845",4.87%,Max Utilized,Max Utilized
+Country,Current utilization (KGM),Share of total utilization (%),Japan,"535,206",7.26%,Max Utilized,Max Utilized
+Country,Current utilization (KGM),Share of total utilization (%),"Korea, Republic of","1,768,824",24.00%,Max Utilized,Max Utilized
+Country,Current utilization (KGM),Share of total utilization (%),Lithuania,"536,240",7.28%,Max Utilized,Max Utilized
+Country,Current utilization (KGM),Share of total utilization (%),Malaysia,"928,396",12.60%,Max Utilized,Max Utilized
+Country,Current utilization (KGM),Share of total utilization (%),Netherlands,"48,448",0.66%,Max Utilized,Max Utilized
+Country,Current utilization (KGM),Share of total utilization (%),Portugal,"290,964",3.95%,Max Utilized,Max Utilized
+Country,Current utilization (KGM),Share of total utilization (%),Sweden,"17,423",0.24%,Max Utilized,Max Utilized
+Country,Current utilization (KGM),Share of total utilization (%),Ukraine,"21,942",0.30%,Max Utilized,Max Utilized
+Country,Current utilization (KGM),Share of total utilization (%),Vietnam,"1,757,606",23.85%,Max Utilized,Max Utilized
+
+Textboxb6db942229da46bd872d39356f1404bb31,Textbox6defe02f6a5b4da79422566035a32411,Textbox8183768284fd4c8a9fecbd60b0f055be31,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_14,Textbox71,Textbox111
+
+Textboxb6db942229da46bd872d39356f1404bb30,Textbox6defe02f6a5b4da79422566035a32410,Textbox8183768284fd4c8a9fecbd60b0f055be30,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_6,Textbox73,Textbox113
+Country,Current utilization (KGM),Share of total utilization (%),Belgium,"3,100",53.45%,"3,100",53.45%
+
+Textboxb6db942229da46bd872d39356f1404bb29,Textbox6defe02f6a5b4da79422566035a32409,Textbox8183768284fd4c8a9fecbd60b0f055be29,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,Textbox75,Textbox114
+Country,Current utilization (KGM),Share of total utilization (%),Germany,"43,825",0.70%,"2,831,936",45.32%
+Country,Current utilization (KGM),Share of total utilization (%),Italy,"182,278",2.92%,"2,831,936",45.32%
+Country,Current utilization (KGM),Share of total utilization (%),Japan,"195,988",3.14%,"2,831,936",45.32%
+Country,Current utilization (KGM),Share of total utilization (%),"Korea, Republic of","2,322,711",37.17%,"2,831,936",45.32%
+Country,Current utilization (KGM),Share of total utilization (%),Lithuania,211,0.00%,"2,831,936",45.32%
+Country,Current utilization (KGM),Share of total utilization (%),Malaysia,"35,282",0.56%,"2,831,936",45.32%
+Country,Current utilization (KGM),Share of total utilization (%),Romania,"17,678",0.28%,"2,831,936",45.32%
+Country,Current utilization (KGM),Share of total utilization (%),Spain,"33,963",0.54%,"2,831,936",45.32%
+
+Textboxb6db942229da46bd872d39356f1404bb28,Textbox6defe02f6a5b4da79422566035a32408,Textbox8183768284fd4c8a9fecbd60b0f055be28,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_15,Textbox77,Textbox115
+Country,Current utilization (KGM),Share of total utilization (%),Austria,"5,713,668",58.30%,"9,736,371",99.34%
+Country,Current utilization (KGM),Share of total utilization (%),Italy,"3,281,597",33.48%,"9,736,371",99.34%
+Country,Current utilization (KGM),Share of total utilization (%),Japan,"143,630",1.47%,"9,736,371",99.34%
+Country,Current utilization (KGM),Share of total utilization (%),"Korea, Republic of","396,127",4.04%,"9,736,371",99.34%
+Country,Current utilization (KGM),Share of total utilization (%),Malaysia,"201,349",2.05%,"9,736,371",99.34%
+
+Textboxb6db942229da46bd872d39356f1404bb27,Textbox6defe02f6a5b4da79422566035a32407,Textbox8183768284fd4c8a9fecbd60b0f055be27,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_7,Textbox79,Textbox118
+Country,Current utilization (KGM),Share of total utilization (%),Brunei,"22,291",0.17%,"4,161,109",30.85%
+Country,Current utilization (KGM),Share of total utilization (%),Finland,"13,904",0.10%,"4,161,109",30.85%
+Country,Current utilization (KGM),Share of total utilization (%),Germany,"67,375",0.50%,"4,161,109",30.85%
+Country,Current utilization (KGM),Share of total utilization (%),Italy,"240,291",1.78%,"4,161,109",30.85%
+Country,Current utilization (KGM),Share of total utilization (%),Japan,"130,201",0.97%,"4,161,109",30.85%
+Country,Current utilization (KGM),Share of total utilization (%),"Korea, Republic of","108,985",0.81%,"4,161,109",30.85%
+Country,Current utilization (KGM),Share of total utilization (%),Malaysia,"608,775",4.51%,"4,161,109",30.85%
+Country,Current utilization (KGM),Share of total utilization (%),Netherlands,"33,723",0.25%,"4,161,109",30.85%
+Country,Current utilization (KGM),Share of total utilization (%),Poland,"1,688",0.01%,"4,161,109",30.85%
+Country,Current utilization (KGM),Share of total utilization (%),Spain,"9,599",0.07%,"4,161,109",30.85%
+Country,Current utilization (KGM),Share of total utilization (%),Sweden,19,0.00%,"4,161,109",30.85%
+Country,Current utilization (KGM),Share of total utilization (%),Switzerland,12,0.00%,"4,161,109",30.85%
+Country,Current utilization (KGM),Share of total utilization (%),Ukraine,"1,306",0.01%,"4,161,109",30.85%
+Country,Current utilization (KGM),Share of total utilization (%),Vietnam,"2,922,940",21.67%,"4,161,109",30.85%
+
+Textboxb6db942229da46bd872d39356f1404bb26,Textbox6defe02f6a5b4da79422566035a32406,Textbox8183768284fd4c8a9fecbd60b0f055be26,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,Textbox81,Textbox119
+Country,Current utilization (KGM),Share of total utilization (%),Germany,"422,494",3.95%,"633,593",5.93%
+Country,Current utilization (KGM),Share of total utilization (%),"Korea, Republic of","211,099",1.97%,"633,593",5.93%
+
+Textboxb6db942229da46bd872d39356f1404bb24,Textbox6defe02f6a5b4da79422566035a32404,Textbox8183768284fd4c8a9fecbd60b0f055be24,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_CONTROL_ITEMS_FACT_Utilized,Textbox83,Textbox121
+
+Textboxb6db942229da46bd872d39356f1404bb25,Textbox6defe02f6a5b4da79422566035a32405,Textbox8183768284fd4c8a9fecbd60b0f055be25,CONTROL_ITEMS_Level_1_Commodity_Code,ID_PERMIT_ITEM_FACT_Permit_Quantity,ID_v__Utilized_Country_8,Textbox85,Textbox122
+Country,Current utilization (KGM),Share of total utilization (%),Finland,"133,597",4.81%,"1,950,201",70.23%
+Country,Current utilization (KGM),Share of total utilization (%),Germany,"13,197",0.48%,"1,950,201",70.23%
+Country,Current utilization (KGM),Share of total utilization (%),Italy,81,0.00%,"1,950,201",70.23%
+Country,Current utilization (KGM),Share of total utilization (%),Japan,"633,857",22.83%,"1,950,201",70.23%
+Country,Current utilization (KGM),Share of total utilization (%),"Korea, Republic of","6,711",0.24%,"1,950,201",70.23%
+Country,Current utilization (KGM),Share of total utilization (%),Portugal,77,0.00%,"1,950,201",70.23%
+Country,Current utilization (KGM),Share of total utilization (%),United Kingdom,"24,152",0.87%,"1,950,201",70.23%
+Country,Current utilization (KGM),Share of total utilization (%),Vietnam,"1,138,529",41.00%,"1,950,201",70.23%
+

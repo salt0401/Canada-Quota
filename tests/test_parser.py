@@ -37,11 +37,20 @@ def _rows_for(name):
     return quota, share, rows, total_kgm, util_pct
 
 
-def build_new_format(rename_products=False, mismatch_products=frozenset()) -> str:
+def build_new_format(rename_products=False, mismatch_products=frozenset(),
+                     multiline_titles=False) -> str:
     """rename_products: Part A product labels change (simulates a source-side
     rename — no tracked product should be found).
-    mismatch_products: these products' Part B totals disagree with Part A."""
-    lines = ["Textbox137,Textbox143,Textbox155", "meta,meta,meta", "",
+    mismatch_products: these products' Part B totals disagree with Part A.
+    multiline_titles: line 2's title cells carry quoted line breaks, as the
+    live source has since 2026-09 (known-issues Bug 5)."""
+    meta = "meta,meta,meta"
+    if multiline_titles:
+        meta = "Partners: Total Quarterly Volumes," + ",".join(
+            f'"{item}. {name}: Quarterly utilization per country \n'
+            f'The maximum share for any single country is 50% of the maximum quota of 1,000 KGM."'
+            for item, name in PRODUCTS)
+    lines = ["Textbox137,Textbox143,Textbox155", meta, "",
              "Textboxb6db,Textbox0874,Textbox38"]
     hdr6 = ("Product class,Maximum quota (KGM),Maximum country share (%),"
             "Current utilization (KGM),Current utilization (%),Remaining quota (KGM)")
@@ -99,6 +108,13 @@ def test_parse_both_formats(builder):
     # "Max Utilized" maps to 100% (product) / 100% is not forced on countries.
     assert result["Rebar"]["total_util_pct"] == 1.0
     assert result["Rebar"]["countries"]["Max"] == pytest.approx(1.0)
+
+
+def test_multiline_title_cells_parse_like_single_line():
+    """Quoted line breaks in line 2 must not shift Part A/Part B: positions
+    are counted in CSV records, not physical lines (known-issues Bug 5)."""
+    assert (t.parse_trq_csv(build_new_format(multiline_titles=True))
+            == t.parse_trq_csv(build_new_format()))
 
 
 def test_positional_alignment_not_shifted():
@@ -165,3 +181,26 @@ def test_real_fixture_matches_golden():
         with open(os.path.join(FIXTURES, fixture), encoding="utf-8") as f:
             parsed = json.loads(json.dumps(t.parse_trq_csv(f.read())))
         assert parsed == golden[partner], f"{partner} fixture parse drifted from golden"
+
+
+def test_real_multiline_fixture_2026_10():
+    """Live-captured FTA Y2Q2 CSV (2026-10-20), the first with quoted CRLF line
+    breaks in its title row. Expected values are read off the raw CSV, not off
+    a parser run. newline="" keeps the CRLFs, as download_csv() hands them over."""
+    with open(os.path.join(FIXTURES, "TRQ_FTA_Y2Q2_multiline.csv"),
+              encoding="utf-8", newline="") as f:
+        result = t.parse_trq_csv(f.read())
+    assert set(result) == set(t.TRACKED_PRODUCTS)
+
+    hrs = result["Hot-Rolled Sheet"]
+    assert (hrs["item_number"], hrs["max_quota"]) == (3, 8_569_800)
+    assert hrs["max_share"] == pytest.approx(0.71)
+    assert hrs["total_util_pct"] == pytest.approx(1.0)
+    assert hrs["countries"]["Japan"] == pytest.approx(0.3998)
+    assert hrs["countries"]["Korea, Republic of"] == pytest.approx(0.5738)
+
+    plate = result["Steel Plate"]
+    assert (plate["item_number"], plate["max_quota"]) == (5, 38_517_700)
+    assert plate["total_util_pct"] == pytest.approx(0.9969)
+    assert plate["countries"]["Australia"] == pytest.approx(0.1460)
+    assert "Australia" not in hrs["countries"]

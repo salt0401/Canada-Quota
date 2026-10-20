@@ -24,7 +24,13 @@ GitHub Release.
 
 ## Current status
 
-- **Latest meaningful change (2026-08-02): the weekly run moved off GitHub
+- **Latest meaningful change (2026-10-20): parser fix for a source format
+  change.** From 2026-09-28 the government CSVs carry quoted line breaks in
+  their title row, which made every weekly run fail until the parser was
+  changed to count CSV records instead of physical lines. Four weekly columns
+  are missing as a result. See Bug 5 in
+  [docs/known-issues.md](docs/known-issues.md).
+- **Previous meaningful change (2026-08-02): the weekly run moved off GitHub
   Actions onto the MEPS company server** (`C:\DataScienceProject\CanadaQuota`,
   Windows Task Scheduler, Mondays 13:00 local). Nothing about the pipeline, the
   workbook format, the repository or Laura's downloader changed — only the

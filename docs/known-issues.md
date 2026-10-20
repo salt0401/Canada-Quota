@@ -338,6 +338,52 @@ signature".
 
 ---
 
+## Bug 5 — Source put quoted line breaks in the title row; parser counted physical lines — FIXED 2026-10-20
+
+**Severity:** high, but loud: four consecutive weekly runs (2026-09-28,
+10-05, 10-12, 10-19) exited 1 and published nothing. No wrong data shipped.
+
+**Symptom:** `TRQ CSV parse failed: Part A has 0 product rows (expected 23)`,
+preceded by about twenty warnings of the form `Part A line N has only 3 fields
+(expected 13+), skipping: The maximum share for any single country is 59% of
+the maximum quota of ...`.
+
+**Root cause:** between the 2026-09-21 and 2026-09-28 runs the source
+re-published its CSVs (the then-current `TRQ_FTA-Y2Q1.csv` included) with each
+section-title cell on line 2 split across two lines inside quotes:
+`"3. Hot-rolled sheet: Quarterly utilization per country\r\nThe maximum share
+for any single country is 71% of the maximum quota of 8,569,800 KGM."`. That is
+valid CSV, but `parse_trq_csv()` split the text with `splitlines()` and indexed
+Part A from physical line 5. The 23 embedded breaks put "line 5" inside the
+title record; every line there was too short, all were skipped, and the count
+guard fired. Read as CSV records, the new files have exactly the 2026-07
+fixtures' layout: Part A at records 4–26 with 13 fields each, and identical Part B
+headers. Only the title text changed (lower-case names, plus the cap sentence).
+
+**The guard did its job.** This is the 2026-07-06 hardening pass working as
+designed. A positional parse that desynchronised silently would have
+published countries under the wrong products.
+
+**Fix:** `parse_trq_csv()` parses the whole text once with `csv.reader` and
+counts every position in records. No guard was loosened: the 23-row count, the
+Part A/B mismatch limit and the all-products-missing check are unchanged.
+`tests/test_parser.py` adds a synthetic multi-line-title case and a
+live-captured fixture (`tests/fixtures/TRQ_FTA_Y2Q2_multiline.csv`, captured
+2026-10-20, CRLFs kept). Its expected values were read off the raw CSV, not
+produced by a parser run.
+
+**Data gap (unrecoverable):** the workbook has no column for 2026-09-28 (the
+last week of Year-2 Q1) or for 10-05, 10-12 and 10-19 (Q2). The source serves
+only the current state, so those weekly snapshots cannot be re-fetched.
+
+**Prevention:**
+- Never index a CSV by physical line. A quoted field may span lines, so parse
+  records first and count positions in records.
+- A source re-publication can change the format mid-quarter, not only at a
+  program-year rollover (compare Bug 4).
+
+---
+
 ## Validation recipe
 
 See the "Validating correctness by hand" section of [../README.md](../README.md):

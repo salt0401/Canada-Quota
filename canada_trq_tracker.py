@@ -417,21 +417,26 @@ def parse_trq_csv(csv_text: str) -> dict:
             ...
         }
     """
-    lines = csv_text.splitlines()
-    if not lines:
+    # CSV records, not physical lines: since 2026-09 the source quotes line
+    # breaks inside line 2's title cells, and splitlines() then shifted every
+    # positional index below it (known-issues Bug 5). All "line" positions in
+    # this function count records.
+    rows = list(csv.reader(io.StringIO(csv_text)))
+    if not rows:
         raise ValueError("Empty CSV")
 
     # Detect format
-    if lines[0].startswith("ExecutionTime"):
+    first = ",".join(rows[0])
+    if first.startswith("ExecutionTime"):
         fmt = "old"
         part_a_offset = 0
         part_b_offset = 0
-    elif lines[0].startswith("Textbox"):
+    elif first.startswith("Textbox"):
         fmt = "new"
         part_a_offset = 6
         part_b_offset = 3
     else:
-        raise ValueError(f"Unrecognized CSV format. Line 1: {lines[0][:80]}")
+        raise ValueError(f"Unrecognized CSV format. Line 1: {first[:80]}")
 
     log.info("CSV format detected: %s", fmt)
 
@@ -441,12 +446,12 @@ def parse_trq_csv(csv_text: str) -> dict:
     # the count assert below then fails the run loudly.
     part_a_items: list[dict] = []
     i = _PART_A_START
-    while i < len(lines) and lines[i].strip():
-        fields = list(csv.reader(io.StringIO(lines[i])))[0]
+    while i < len(rows) and ",".join(rows[i]).strip():
+        fields = rows[i]
         o = part_a_offset
         if len(fields) < o + 7:
             log.warning("Part A line %d has only %d fields (expected %d+), skipping: %s",
-                        i + 1, len(fields), o + 7, lines[i][:80])
+                        i + 1, len(fields), o + 7, ",".join(fields)[:80])
             i += 1
             continue
         part_a_items.append({
@@ -472,8 +477,9 @@ def parse_trq_csv(csv_text: str) -> dict:
     part_b_sections: list[list[dict]] = []
     current_section: list[dict] | None = None
 
-    for i in range(part_b_start, len(lines)):
-        line = lines[i].strip()
+    for i in range(part_b_start, len(rows)):
+        fields = rows[i]
+        line = ",".join(fields).strip()
 
         if not line:
             # Blank line: end of current section
@@ -492,7 +498,6 @@ def parse_trq_csv(csv_text: str) -> dict:
 
         # Data row (not blank, not header)
         if current_section is not None:
-            fields = list(csv.reader(io.StringIO(line)))[0]
             o = part_b_offset
             if len(fields) > o + 4:
                 country = fields[o].strip()
